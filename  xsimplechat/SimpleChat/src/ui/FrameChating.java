@@ -1,7 +1,6 @@
 package ui;
 
 import java.awt.BorderLayout;
-import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
@@ -11,8 +10,6 @@ import javax.swing.*;
 import controler.ChatingControler;
 
 public class FrameChating extends Performer {
-
-	public static final int UPDATE_NEWMESSAGE = 1;
 
 	JLabel display = new JLabel();
 	JTextArea text = new JTextArea();
@@ -28,7 +25,9 @@ public class FrameChating extends Performer {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				controler.processUIAction(ChatingControler.AC_SENDMESSAGE, text.getText());
+				Object[] params=new Object[1];
+				params[0]=text.getText();
+				controler.processUIAction(ChatingControler.AC_SENDMESSAGE, params);
 			}
 		});
 		panel.add(display, BorderLayout.NORTH);
@@ -39,11 +38,28 @@ public class FrameChating extends Performer {
 		frame.setVisible(true);
 	}
 
+	public static final int UPDATE_NEWMESSAGE = 1;
+	public static final int UPDATE_CLOSE = 2;
+	public static final int UPDATE_CONNECTSTATE = 3;
+	
 	@Override
-	public void updateUI(int type, String s) {
+	public void updateUI(int type, Object[] params) {
 		if (type == UPDATE_NEWMESSAGE) {
-			display.setText(s);
+			display.setText((String)params[0]);
 		}
+		else if(type==UPDATE_CLOSE) {
+			//thisframe.setVisible(false);
+			//thisframe.dispose();
+		}
+		else if(type==UPDATE_CONNECTSTATE) {
+			//statebar.setText("params")
+		}
+	}
+
+	@Override
+	protected void generateUI() {
+		// TODO Auto-generated method stub
+		
 	}
 
 }

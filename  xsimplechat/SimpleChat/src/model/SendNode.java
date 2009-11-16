@@ -2,18 +2,18 @@ package model;
 
 public class SendNode {
 	private byte[] msg;
-	private int sid;
+	private long sid;
 
 	public SendNode() {
 		this(0, new byte[0]);
 	}
 
-	public SendNode(int sid, byte[] msg) {
+	public SendNode(long sid, byte[] msg) {
 		this.sid = sid;
 		this.msg = msg;
 	}
 
-	public int getSid() {
+	public long getSid() {
 		return sid;
 	}
 

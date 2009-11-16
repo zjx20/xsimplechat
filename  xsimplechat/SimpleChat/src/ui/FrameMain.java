@@ -1,7 +1,7 @@
 package ui;
 
 import model.*;
-import javax.swing.JFrame;
+
 
 /**
  * @author X
@@ -9,16 +9,22 @@ import javax.swing.JFrame;
  */
 public class FrameMain extends Performer {
 
-	private static final long serialVersionUID = -5459127417090437252L;
-
-	public FrameMain() {
-
+	protected FrameMain(Controler controler) {
+		super(controler);
+		// TODO Auto-generated constructor stub
 	}
 
 	@Override
-	public void updateUI(int type, String s) {
+	public void updateUI(int type, Object[] params) {
 		// TODO Auto-generated method stub
-
+		
 	}
+
+	@Override
+	protected void generateUI() {
+		// TODO Auto-generated method stub
+		
+	}
+
 
 }

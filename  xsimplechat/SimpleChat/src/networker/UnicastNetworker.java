@@ -6,6 +6,11 @@ import model.*;
 import java.io.*;
 import java.net.*;
 
+/**
+ * <p>基于socket的单播networker</p>
+ * @author X
+ *
+ */
 public class UnicastNetworker extends Networker {
 
 	private Socket socket;
@@ -16,7 +21,7 @@ public class UnicastNetworker extends Networker {
 	}
 
 	@Override
-	protected void receiveMessage() {
+	protected void receiveData() {
 		if (socket == null || socket.isClosed()) {
 			controler.downConnect();
 			closeNetworker();
@@ -29,7 +34,7 @@ public class UnicastNetworker extends Networker {
 			if (amount <= 0)
 				return;
 			buf = (byte[]) Toolkit.fixArraySize(buf, amount);
-			controler.processMessage(buf);
+			controler.processData(buf);
 		} catch (IOException e) {
 			System.out.println("Don't worry about this exception, it is not a serious problem.");
 			e.printStackTrace();
@@ -41,7 +46,7 @@ public class UnicastNetworker extends Networker {
 	}
 
 	@Override
-	protected void sendMessage() {
+	protected void sendData() {
 		SendNode s = null;
 		try {
 			s = sendQueue.take();
@@ -78,7 +83,7 @@ public class UnicastNetworker extends Networker {
 
 	@Override
 	public void closeNetworker() {
-		finish = true;
+		super.closeNetworker();
 		if (socket != null && socket.isConnected()) { //断开连接
 			try {
 				socket.getOutputStream().close();
