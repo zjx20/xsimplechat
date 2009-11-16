@@ -4,6 +4,13 @@ import java.io.*;
 import java.lang.reflect.*;
 import java.net.*;
 
+/**
+ * <p>基于Controler模型的TCP服务器类</p>
+ * <p>主要用于监听网络端口，一旦有连接，则产生一个指定类型的Controler实例</p>
+ * <p>调用指定参数的Controler方法：public Controler(Socket)</p>
+ * @author X
+ *
+ */
 public abstract class Server extends Thread {
 	private Class<?> classControler;
 	private ServerSocket sSocket;

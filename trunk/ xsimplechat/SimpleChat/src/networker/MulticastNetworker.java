@@ -5,6 +5,11 @@ import model.*;
 import java.io.*;
 import java.net.*;
 
+/**
+ * <p>基于UDP的多播networker</p>
+ * @author X
+ *
+ */
 public class MulticastNetworker extends Networker {
 
 	private static String DEFAULT_GROUP_IPADDRESS = "230.0.0.1";
@@ -22,7 +27,7 @@ public class MulticastNetworker extends Networker {
 	}
 
 	@Override
-	protected void receiveMessage() {
+	protected void receiveData() {
 		try {
 			if (rSocket == null) {
 				rSocket = new MulticastSocket(DEFAULT_PORT);
@@ -33,7 +38,7 @@ public class MulticastNetworker extends Networker {
 			byte[] buf = new byte[DEFAULT_BUFFER_SIZE];
 			DatagramPacket packet = new DatagramPacket(buf, buf.length);
 			rSocket.receive(packet);
-			controler.processMessage(packet.getData());
+			controler.processData(packet.getData());
 
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -41,7 +46,7 @@ public class MulticastNetworker extends Networker {
 	}
 
 	@Override
-	protected void sendMessage() {
+	protected void sendData() {
 		SendNode s = null;
 		try {
 			s = sendQueue.take();
@@ -77,7 +82,7 @@ public class MulticastNetworker extends Networker {
 
 	@Override
 	public void closeNetworker() {
-		finish = true;
+		super.closeNetworker();
 		try {
 			if (sSocket != null) {
 				sSocket.leaveGroup(group);
