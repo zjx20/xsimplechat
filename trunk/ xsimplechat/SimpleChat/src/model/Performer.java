@@ -20,7 +20,7 @@ public abstract class Performer {
 	 * @param params 更新参数
 	 */
 	public abstract void updateUI(int type, Object[] params);
-
+	public abstract void updateUISend(int type, Object[] params);
 	/**
 	 * <p>Performer用于生成界面的方法</p>
 	 */

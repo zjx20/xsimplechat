@@ -38,7 +38,7 @@ public class MulticastNetworker extends Networker {
 			byte[] buf = new byte[DEFAULT_BUFFER_SIZE];
 			DatagramPacket packet = new DatagramPacket(buf, buf.length);
 			rSocket.receive(packet);
-			controler.processData(packet.getData());
+			controler.processRawData(packet.getData());
 
 		} catch (IOException e) {
 			e.printStackTrace();

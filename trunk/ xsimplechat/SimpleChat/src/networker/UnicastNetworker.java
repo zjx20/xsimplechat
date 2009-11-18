@@ -13,12 +13,19 @@ import java.net.*;
  */
 public class UnicastNetworker extends Networker {
 
+	public static final byte START_OF_HEADER = 0x01;
+	public static final byte END_OF_TRANSMISSION = 0x04;
+	public static final byte ESCAPE = 0x1B;
+
 	private Socket socket;
 
 	public UnicastNetworker(Socket socket, Controler controler) {
 		super(controler);
 		this.socket = socket;
 	}
+
+	private boolean startSign = false, endSign = false;
+	private ByteArrayOutputStream tempStream = new ByteArrayOutputStream();
 
 	@Override
 	protected void receiveData() {
@@ -33,8 +40,30 @@ public class UnicastNetworker extends Networker {
 			amount = socket.getInputStream().read(buf);
 			if (amount <= 0)
 				return;
-			buf = (byte[]) Toolkit.fixArraySize(buf, amount);
-			controler.processData(buf);
+			int i = 0;
+			while (i < amount) {
+				if (startSign ^ endSign) {
+					int s = i;
+					for (; i < amount; i++)
+						if (buf[i] == END_OF_TRANSMISSION)
+							break;
+					tempStream.write(buf, s, i - s);
+					if (i < amount) {
+						endSign = !endSign;
+						controler.processRawData(decodeForReceive(tempStream.toByteArray()));
+						tempStream.reset();
+						i++;
+					}
+				} else {
+					for (; i < amount; i++)
+						if (buf[i] == START_OF_HEADER)
+							break;
+					if (i < amount) {
+						startSign = !startSign;
+						i++;
+					}
+				}
+			}
 		} catch (IOException e) {
 			System.out.println("Don't worry about this exception, it is not a serious problem.");
 			e.printStackTrace();
@@ -63,7 +92,7 @@ public class UnicastNetworker extends Networker {
 		int count = 0;
 		while (count < DEFAULT_RETRY_TIME) {
 			try {
-				socket.getOutputStream().write(s.getMsg());
+				socket.getOutputStream().write(encodeForSend(s.getMsg()));
 				socket.getOutputStream().flush();
 			} catch (IOException e) {
 				e.printStackTrace();
@@ -78,7 +107,6 @@ public class UnicastNetworker extends Networker {
 			break;
 		}
 		controler.receipt(s.getSid(), count < DEFAULT_RETRY_TIME);
-
 	}
 
 	@Override
@@ -94,4 +122,53 @@ public class UnicastNetworker extends Networker {
 		}
 	}
 
+	private byte[] encodeForSend(byte[] a) {
+		int count = 0;
+		for (int i = 0; i < a.length; i++) {
+			if (a[i] == START_OF_HEADER || a[i] == END_OF_TRANSMISSION || a[i] == ESCAPE)
+				count++;
+		}
+		byte[] result = new byte[a.length + count + 2];
+		int pos = 0;
+		result[pos++] = START_OF_HEADER;
+		for (int i = 0; i < a.length; i++) {
+			if (a[i] == START_OF_HEADER) {
+				result[pos++] = ESCAPE;
+				result[pos++] = 'x';
+			} else if (a[i] == END_OF_TRANSMISSION) {
+				result[pos++] = ESCAPE;
+				result[pos++] = 'y';
+			} else if (a[i] == ESCAPE) {
+				result[pos++] = ESCAPE;
+				result[pos++] = 'z';
+			} else
+				result[pos++] = a[i];
+		}
+		result[pos++] = END_OF_TRANSMISSION;
+		return result;
+	}
+
+	private byte[] decodeForReceive(byte[] a) {
+		int count = 0;
+		for (int i = 0; i < a.length; i++) {
+			if (a[i] == ESCAPE)
+				count++;
+		}
+		byte[] result = new byte[a.length - count];
+		int pos = 0;
+		for (int i = 0; i < a.length; i++) {
+			if (a[i] == ESCAPE) {
+				i++;
+				if (a[i] == 'x')
+					result[pos++] = START_OF_HEADER;
+				else if (a[i] == 'y')
+					result[pos++] = END_OF_TRANSMISSION;
+				else if (a[i] == 'z')
+					result[pos++] = ESCAPE;
+			} else
+				result[pos++] = a[i];
+		}
+		return result;
+	}
 }
+

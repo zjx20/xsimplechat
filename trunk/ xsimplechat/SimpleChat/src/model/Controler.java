@@ -20,7 +20,7 @@ public abstract class Controler {
 	 * <p>预留给Networker的接口，用于处理生的网络数据</p>
 	 * @param buf 未经加工的网络数据
 	 */
-	public abstract void processData(byte[] buf);
+	public abstract void processRawData(byte[] buf);
 
 	/**
 	 * <p>预留给Performer的接口，用于处理Performer所产生的事件</p>

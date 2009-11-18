@@ -5,8 +5,14 @@ import model.*;
 import networker.*;
 import util.*;
 
+import java.io.FileWriter;
+import java.io.IOException;
 import java.net.*;
 import java.util.Date;
+import java.io.*;
+
+import javax.swing.JFileChooser;
+import javax.swing.JOptionPane;
 
 /**
  * <p>私聊专用controler</p>
@@ -15,13 +21,15 @@ import java.util.Date;
  */
 public class ChatingControler extends Controler {
 
+	public static final Object lock=new Object();
+	
 	public static final int AC_SENDMESSAGE = 1;
 	public static final int AC_CLOSEWINDOW = 2;
-	public static final int AC_SAVECHATLOG = 3;
-	public static final int AC_SENDFILE = 4;
+	public static final int AC_SENDFILE = 3;
+	public static final int AC_SAVECHATLOG = 4;
 
 	public static final int SIZE_HEADER = 16;
-	public static final int SIZE_VALIDATION_CODE = 128;
+	public static final int SIZE_VALIDATION_CODE = 12;
 
 	public static final String HEADER_VALIDATE = Toolkit.padString("VALIDATE", SIZE_HEADER);
 	public static final String HEADER_REPLY_VALIDATE = Toolkit.padString("REVALIDATE", SIZE_HEADER);
@@ -31,6 +39,7 @@ public class ChatingControler extends Controler {
 	private byte[] validationCode;
 	private boolean verifiedConnection;
 	private long sid;
+	private File selectfile;
 
 	public ChatingControler(Socket socket) {
 		this.networker = new UnicastNetworker(socket, this);
@@ -38,6 +47,10 @@ public class ChatingControler extends Controler {
 		validationCode = generateValidationCode();
 		sid = 0;
 		networker.send(sid++, Toolkit.generateSendData(HEADER_VALIDATE, validationCode));
+		synchronized(lock) {
+			System.out.print("验证信息：");
+			printByte(Toolkit.generateSendData(HEADER_VALIDATE, validationCode));
+		}
 	}
 
 	/**
@@ -84,11 +97,15 @@ public class ChatingControler extends Controler {
 	}
 
 	@Override
-	public void processData(byte[] buf) {
+	public void processRawData(byte[] buf) {
 		//if (buf.length < SIZE_HEADER) //忽略短数据
 		//	return;
+		synchronized(lock) {
+			System.out.print("接收信息：");
+			printByte(buf);
+		}
 		String header = new String(buf, 0, SIZE_HEADER);
-		System.out.println("receive header:" + header);
+		//System.out.println("receive header:" + header);
 		if (header.compareTo(HEADER_VALIDATE) == 0) {
 			//收到验证请求
 			if (buf.length < SIZE_HEADER + SIZE_VALIDATION_CODE) //验证码长度不正确
@@ -128,11 +145,10 @@ public class ChatingControler extends Controler {
 			if (!verifiedConnection) {
 				networker.closeNetworker(); //未经验证的连接，关闭
 			}
-			Object[] params=new Object[1];
+			Object[] params = new Object[1];
 			params[0] = new String(buf, SIZE_HEADER, buf.length - SIZE_HEADER);
 			performer.updateUI(FrameChating.UPDATE_NEWMESSAGE, params);
 		} else if (header.compareTo(HEADER_FILE) == 0) {
-
 		}
 	}
 
@@ -141,8 +157,34 @@ public class ChatingControler extends Controler {
 		if (type == AC_SENDMESSAGE) {
 			networker.send(sid++, Toolkit.generateSendData(HEADER_MESSAGE, (new Date().getTime()
 					+ " " + params[0]).getBytes()));
+			performer.updateUISend(FrameChating.UPDATE_NEWMESSAGE, params);
+		}
+		else if (type == AC_SENDFILE) {
+			performer.updateUISend(FrameChating.UPDATE_SENDFILE, params);
+		}
+		else if (type == AC_SAVECHATLOG) {
+	        JFileChooser jfc = new JFileChooser( );  
+            int r = jfc.showDialog(null, "保存");   
+               if (r == JFileChooser.APPROVE_OPTION) {   
+               selectfile = jfc.getSelectedFile();   
+               try{
+               	FileWriter output = new FileWriter(selectfile.getPath()+".txt");
+               	output.write((String)params[0]);
+               	output.close();
+               	JOptionPane.showMessageDialog(null, "保存完毕","GUIDES",JOptionPane.INFORMATION_MESSAGE);
+               }
+               catch(IOException ex) {
+               	JOptionPane.showMessageDialog(null, "The file does not exist.","GUIDES",JOptionPane.INFORMATION_MESSAGE);
+               }
+}
+		}
+		else if (type == AC_CLOSEWINDOW) {
+			performer.updateUI(FrameChating.UPDATE_CLOSE, params);
+			performer.updateUISend(FrameChating.UPDATE_CLOSE, params);
+			networker.closeNetworker();
 		}
 	}
+	
 
 	@Override
 	public void receipt(long sid, boolean result) {
@@ -150,4 +192,11 @@ public class ChatingControler extends Controler {
 
 	}
 
+	private synchronized void printByte(byte[] a) {
+		int i;
+		for (i = 0; i < a.length; i++) {
+			System.out.print((a[i] & 0xff) + " ");
+		}
+		System.out.println();
+	}
 }
