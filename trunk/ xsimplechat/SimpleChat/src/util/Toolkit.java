@@ -50,4 +50,42 @@ public class Toolkit {
 		System.arraycopy(data, 0, result, hSize, dSize);
 		return result;
 	}
+
+	/**
+	 * <p>合并两个数组，得到的新数组长度为a1.length+a2.length，数据内容为a2接到a1后面</p>
+	 * <p>若参数存在非数组类型或两个数组的类型不同，则返回null</p>
+	 * @param a1 数组1
+	 * @param a2 数组2
+	 * @return 合并后的新数组
+	 */
+	public static Object mergeArray(Object a1, Object a2) {
+		Class<?> c1 = a1.getClass(), c2 = a2.getClass();
+		if (!c1.isArray() || !c2.isArray() || !c1.equals(c2))
+			return null;
+		int length1 = Array.getLength(a1), length2 = Array.getLength(a2);
+		Object result = Array.newInstance(c1.getComponentType(), length1 + length2);
+		System.arraycopy(a1, 0, result, 0, length1);
+		System.arraycopy(a2, 0, result, length1, length2);
+		return result;
+	}
+
+	/**
+	 * <p>从指定数组中截取一段，并返回截取出的数组对象</p>
+	 * @param array 源数组对象
+	 * @param pos 开始位置
+	 * @param len 截取长度
+	 * @return 截取的数组的对象
+	 * @throws NullPointerException 如果array为空
+	 * @throws IndexOutOfBoundsException 如果<code>pos+len-1>array.length</code>
+	 * @throws NegativeArraySizeException 如果<code>pos>array.length</code>
+	 */
+	public static Object cutArray(Object array, int pos, int len) {
+		Class<?> c = array.getClass();
+		if (!c.isArray())
+			return null;
+		int length = Math.min(len, Array.getLength(array) - pos);
+		Object result = Array.newInstance(c.getComponentType(), length);
+		System.arraycopy(array, pos, result, 0, length);
+		return result;
+	}
 }

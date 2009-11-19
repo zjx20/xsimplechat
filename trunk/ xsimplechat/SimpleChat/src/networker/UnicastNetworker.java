@@ -1,10 +1,11 @@
 package networker;
 
-import util.*;
 import model.*;
 
 import java.io.*;
 import java.net.*;
+
+import controler.ChatingControler;
 
 /**
  * <p>基于socket的单播networker</p>
@@ -13,6 +14,8 @@ import java.net.*;
  */
 public class UnicastNetworker extends Networker {
 
+	static final Object lock=new Object();
+	
 	public static final byte START_OF_HEADER = 0x01;
 	public static final byte END_OF_TRANSMISSION = 0x04;
 	public static final byte ESCAPE = 0x1B;
@@ -38,6 +41,10 @@ public class UnicastNetworker extends Networker {
 		int amount;
 		try {
 			amount = socket.getInputStream().read(buf);
+			synchronized (lock) {
+				System.out.print(Thread.currentThread() + " res ");
+				ChatingControler.printByte(buf, amount);
+			}
 			if (amount <= 0)
 				return;
 			int i = 0;
@@ -92,6 +99,10 @@ public class UnicastNetworker extends Networker {
 		int count = 0;
 		while (count < DEFAULT_RETRY_TIME) {
 			try {
+				synchronized (lock) {
+					System.out.print(Thread.currentThread() + " send ");
+					ChatingControler.printByte(encodeForSend(s.getMsg()));
+				}
 				socket.getOutputStream().write(encodeForSend(s.getMsg()));
 				socket.getOutputStream().flush();
 			} catch (IOException e) {
