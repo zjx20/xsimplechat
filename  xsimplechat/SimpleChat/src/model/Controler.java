@@ -10,10 +10,8 @@ public abstract class Controler {
 
 	protected Performer performer;
 	protected Networker networker;
-	protected boolean connecting;
 
 	protected Controler() {
-		connecting = true;
 	}
 
 	/**
@@ -36,5 +34,6 @@ public abstract class Controler {
 	 */
 	public abstract void receipt(long sid, boolean result);
 
-	public abstract void downConnect();
+	public void downConnect() {
+	}
 }

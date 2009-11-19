@@ -10,12 +10,12 @@ import java.awt.event.*;
 import javax.swing.*;
 
 import controler.ChatingControler;
+import controler.MainControler;
 
 import java.awt.*;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-
 
 /**
  * @author X
@@ -23,7 +23,7 @@ import java.io.IOException;
  */
 public class FrameMain extends Performer {
 
-	private String nickname;
+	private static String nickname;
 	private JTextArea receiveArea;
 	private JTextArea sendArea;
 	private JButton send;
@@ -38,16 +38,23 @@ public class FrameMain extends Performer {
 	public FrameMain() {
 		this(null);
 	}
-	
-	public FrameMain(Controler bridge) {
-		super(bridge);
-		generateUI();
+
+	public FrameMain(Controler controler) {
+		super(controler);
 		setEvent();
 	}
-	
-	public void generateUI(){
-		nickname = JOptionPane.showInputDialog(null, " ‰»ÎÍ«≥∆","µ«¬Ω",JOptionPane.QUESTION_MESSAGE);
-		
+
+	public static String getNickName() {
+		if (nickname == null) {
+			nickname = JOptionPane
+					.showInputDialog(null, " ‰»ÎÍ«≥∆", "µ«¬Ω", JOptionPane.QUESTION_MESSAGE);
+		}
+		return nickname;
+	}
+
+	@Override
+	public void generateUI() {
+
 		receiveArea = new JTextArea();
 		sendArea = new JTextArea();
 		send = new JButton("∑¢ÀÕ");
@@ -61,79 +68,85 @@ public class FrameMain extends Performer {
 		msgPanel.setLayout(new BorderLayout());
 		JPanel recePanel = new JPanel();
 		recePanel.setLayout(new BorderLayout());
-		recePanel.add(receiveArea,BorderLayout.CENTER);
+		recePanel.add(receiveArea, BorderLayout.CENTER);
 		recePanel.setBorder(BorderFactory.createEtchedBorder());
 		JPanel sendPanel = new JPanel();
 		sendPanel.setLayout(new BorderLayout());
-		sendPanel.add(sendArea,BorderLayout.CENTER);
+		sendPanel.add(sendArea, BorderLayout.CENTER);
 		sendPanel.setBorder(BorderFactory.createEtchedBorder());
-		sendPanel.setPreferredSize(new Dimension(180,100));
-		msgPanel.add(recePanel,BorderLayout.CENTER);
-		msgPanel.add(sendPanel,BorderLayout.SOUTH);
-		
+		sendPanel.setPreferredSize(new Dimension(180, 100));
+		msgPanel.add(recePanel, BorderLayout.CENTER);
+		msgPanel.add(sendPanel, BorderLayout.SOUTH);
+
 		JPanel menuPanel = new JPanel();
 		menuPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
 		menuPanel.add(send);
 		menuPanel.add(save);
 		menuPanel.add(close);
 		menuPanel.setBorder(BorderFactory.createEtchedBorder());
-		
+
 		JPanel infoPanel = new JPanel();
 		JPanel noticePanel = new JPanel();
 		noticePanel.setLayout(new BorderLayout());
-		noticePanel.add(notice,BorderLayout.NORTH);
-		noticePanel.add(noticeArea,BorderLayout.CENTER);
+		noticePanel.add(notice, BorderLayout.NORTH);
+		noticePanel.add(noticeArea, BorderLayout.CENTER);
 		noticePanel.setBorder(BorderFactory.createEtchedBorder());
 		JPanel listPanel = new JPanel();
 		listPanel.setLayout(new BorderLayout());
-		listPanel.add(listlab,BorderLayout.NORTH);
-		listPanel.add(list,BorderLayout.CENTER);
-		listPanel.setPreferredSize(new Dimension(180,200));
+		listPanel.add(listlab, BorderLayout.NORTH);
+		listPanel.add(list, BorderLayout.CENTER);
+		listPanel.setPreferredSize(new Dimension(180, 200));
 		listPanel.setBorder(BorderFactory.createEtchedBorder());
 		infoPanel.setLayout(new BorderLayout());
-		infoPanel.add(noticePanel,BorderLayout.CENTER);
-		infoPanel.add(listPanel,BorderLayout.SOUTH);
-		infoPanel.setPreferredSize(new Dimension(180,360));
-		
+		infoPanel.add(noticePanel, BorderLayout.CENTER);
+		infoPanel.add(listPanel, BorderLayout.SOUTH);
+		infoPanel.setPreferredSize(new Dimension(180, 360));
+
 		JFrame frame = new JFrame();
 		frame.setLayout(new BorderLayout());
-		frame.getContentPane().add(msgPanel,BorderLayout.CENTER);
-		frame.getContentPane().add(infoPanel,BorderLayout.EAST);
-		frame.getContentPane().add(menuPanel,BorderLayout.SOUTH);
-		frame.setSize(500,400);
+		frame.getContentPane().add(msgPanel, BorderLayout.CENTER);
+		frame.getContentPane().add(infoPanel, BorderLayout.EAST);
+		frame.getContentPane().add(menuPanel, BorderLayout.SOUTH);
+		frame.setSize(500, 400);
 		frame.setVisible(true);
 		frame.setLocationRelativeTo(null);
-		frame.setResizable(false);	
-		
+		frame.setResizable(false);
+
 	}
 
-		public void setEvent(){
-			send.addActionListener(new ActionListener() {
-				public void actionPerformed(ActionEvent e) {
-					
-				}
-			});
-			
-			 save.addActionListener(new ActionListener() {
-					public void actionPerformed(ActionEvent e) {
-						
-					}
-				 });
-				
-				close.addActionListener(new ActionListener() {
-					public void actionPerformed(ActionEvent e) {
-						
-					}
-				});
+	public void setEvent() {
+		send.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				Object[] params = new Object[1];
+				params[0] = sendArea.getText();
+				controler.processUIAction(MainControler.AC_SEND_MESSAGE, params);
+			}
+		});
+
+		save.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+
+			}
+		});
+
+		close.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+
+			}
+		});
 	}
-	
+
+	public static final int UPDATE_GROUPMESSAGE = 1;
+
 	@Override
 	public void updateUI(int type, Object[] args) {
-		// TODO Auto-generated method stub
+		switch (type) {
+		case UPDATE_GROUPMESSAGE:
+			System.out.println("msg:"+(String) (args[0]));
+			receiveArea.setText((String) (args[0]));
+			break;
+		}
+	}
 
-	}
-	
-	public void updateUISend(int type, Object[] args) {
-		
-	}
+
 }

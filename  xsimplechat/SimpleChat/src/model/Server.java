@@ -8,6 +8,11 @@ import java.net.*;
  * <p>基于Controler模型的TCP服务器类</p>
  * <p>主要用于监听网络端口，一旦有连接，则产生一个指定类型的Controler实例</p>
  * <p>调用指定参数的Controler方法：public Controler(Socket)</p>
+ * <pre>
+ * 调用方法：
+ * 	Server server = new Server(Controler.class);	//指定Controler接受连接
+ * 	server.start();	//开始服务
+ * </pre>
  * @author X
  *
  */

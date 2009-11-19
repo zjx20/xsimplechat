@@ -13,7 +13,7 @@ public abstract class Networker {
 	public static final int DEFAULT_RETRY_TIME = 3;
 	public static final int DEFAULT_TIMEOUT = 10000;
 	public static final int DEFAULT_PORT = 2009;
-	public static final int DEFAULT_BUFFER_SIZE = 1024;
+	public static final int DEFAULT_BUFFER_SIZE = 10240;
 
 	/**
 	 * 线程结束标识

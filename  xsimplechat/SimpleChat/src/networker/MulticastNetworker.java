@@ -5,6 +5,8 @@ import model.*;
 import java.io.*;
 import java.net.*;
 
+import util.Toolkit;
+
 /**
  * <p>基于UDP的多播networker</p>
  * @author X
@@ -32,13 +34,15 @@ public class MulticastNetworker extends Networker {
 			if (rSocket == null) {
 				rSocket = new MulticastSocket(DEFAULT_PORT);
 				rSocket.joinGroup(group);
-				rSocket.setLoopbackMode(true); //不接收本机信息
+				//rSocket.setLoopbackMode(true); //不接收本机信息
 			}
 
 			byte[] buf = new byte[DEFAULT_BUFFER_SIZE];
 			DatagramPacket packet = new DatagramPacket(buf, buf.length);
 			rSocket.receive(packet);
-			controler.processRawData(packet.getData());
+			System.out.println(packet.getLength());
+			controler.processRawData((byte[]) Toolkit.fixArraySize(packet.getData(), packet
+					.getLength()));
 
 		} catch (IOException e) {
 			e.printStackTrace();
