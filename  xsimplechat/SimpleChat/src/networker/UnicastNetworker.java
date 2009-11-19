@@ -15,10 +15,6 @@ import controler.ChatingControler;
 public class UnicastNetworker extends Networker {
 
 	static final Object lock=new Object();
-	
-	public static final byte START_OF_HEADER = 0x01;
-	public static final byte END_OF_TRANSMISSION = 0x04;
-	public static final byte ESCAPE = 0x1B;
 
 	private Socket socket;
 
@@ -131,55 +127,6 @@ public class UnicastNetworker extends Networker {
 				e.printStackTrace();
 			}
 		}
-	}
-
-	private byte[] encodeForSend(byte[] a) {
-		int count = 0;
-		for (int i = 0; i < a.length; i++) {
-			if (a[i] == START_OF_HEADER || a[i] == END_OF_TRANSMISSION || a[i] == ESCAPE)
-				count++;
-		}
-		byte[] result = new byte[a.length + count + 2];
-		int pos = 0;
-		result[pos++] = START_OF_HEADER;
-		for (int i = 0; i < a.length; i++) {
-			if (a[i] == START_OF_HEADER) {
-				result[pos++] = ESCAPE;
-				result[pos++] = 'x';
-			} else if (a[i] == END_OF_TRANSMISSION) {
-				result[pos++] = ESCAPE;
-				result[pos++] = 'y';
-			} else if (a[i] == ESCAPE) {
-				result[pos++] = ESCAPE;
-				result[pos++] = 'z';
-			} else
-				result[pos++] = a[i];
-		}
-		result[pos++] = END_OF_TRANSMISSION;
-		return result;
-	}
-
-	private byte[] decodeForReceive(byte[] a) {
-		int count = 0;
-		for (int i = 0; i < a.length; i++) {
-			if (a[i] == ESCAPE)
-				count++;
-		}
-		byte[] result = new byte[a.length - count];
-		int pos = 0;
-		for (int i = 0; i < a.length; i++) {
-			if (a[i] == ESCAPE) {
-				i++;
-				if (a[i] == 'x')
-					result[pos++] = START_OF_HEADER;
-				else if (a[i] == 'y')
-					result[pos++] = END_OF_TRANSMISSION;
-				else if (a[i] == 'z')
-					result[pos++] = ESCAPE;
-			} else
-				result[pos++] = a[i];
-		}
-		return result;
 	}
 }
 

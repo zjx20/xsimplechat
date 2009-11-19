@@ -5,8 +5,6 @@ import model.*;
 import java.io.*;
 import java.net.*;
 
-import util.Toolkit;
-
 /**
  * <p>基于UDP的多播networker</p>
  * @author X
@@ -28,6 +26,9 @@ public class MulticastNetworker extends Networker {
 		}
 	}
 
+	private boolean startSign = false, endSign = false;
+	private ByteArrayOutputStream tempStream = new ByteArrayOutputStream();
+
 	@Override
 	protected void receiveData() {
 		try {
@@ -40,10 +41,33 @@ public class MulticastNetworker extends Networker {
 			byte[] buf = new byte[DEFAULT_BUFFER_SIZE];
 			DatagramPacket packet = new DatagramPacket(buf, buf.length);
 			rSocket.receive(packet);
-			System.out.println(packet.getLength());
-			controler.processRawData((byte[]) Toolkit.fixArraySize(packet.getData(), packet
-					.getLength()));
-
+			int amount = packet.getLength();
+			if (amount <= 0)
+				return;
+			int i = 0;
+			while (i < amount) {
+				if (startSign ^ endSign) {
+					int s = i;
+					for (; i < amount; i++)
+						if (buf[i] == END_OF_TRANSMISSION)
+							break;
+					tempStream.write(buf, s, i - s);
+					if (i < amount) {
+						endSign = !endSign;
+						controler.processRawData(decodeForReceive(tempStream.toByteArray()));
+						tempStream.reset();
+						i++;
+					}
+				} else {
+					for (; i < amount; i++)
+						if (buf[i] == START_OF_HEADER)
+							break;
+					if (i < amount) {
+						startSign = !startSign;
+						i++;
+					}
+				}
+			}
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -65,7 +89,7 @@ public class MulticastNetworker extends Networker {
 					sSocket = new MulticastSocket();
 					sSocket.joinGroup(group);
 				}
-				byte[] buf = s.getMsg();
+				byte[] buf = encodeForSend(s.getMsg());
 				DatagramPacket packet = new DatagramPacket(buf, buf.length, group, DEFAULT_PORT);
 				sSocket.send(packet);
 			} catch (IOException e) {
