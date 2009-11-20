@@ -1,6 +1,7 @@
 package ui;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
@@ -12,6 +13,7 @@ import model.*;
 import java.io.*;
 import java.awt.*;
 import javax.swing.*;
+import javax.swing.text.StyleConstants;
 
 import java.util.Date;
 
@@ -19,7 +21,7 @@ import controler.ChatingControler;
 
 public class FrameChating extends Performer {
 
-	private TextArea receiveArea;
+	private JTextPane receiveText;
 	private JTextArea sendArea;
 	private JButton sendmsg;
 	private JButton close;
@@ -47,37 +49,36 @@ public class FrameChating extends Performer {
 	public static final int UPDATE_CLOSE = 2;
 	public static final int UPDATE_CONNECTSTATE = 3;
 	public static final int UPDATE_SENDFILE = 4;
+	public static final int UPDATE_NEWMESSAGE_MYSELF = 5;
+	public static final int UPDATE_CLOSE_MYSELF = 6;
+	public static final int UPDATE_CONNECTSTATE_MYSELF = 7;
+	public static final int UPDATE_SENDFILE_MYSELF = 8;
 	
 	@Override
 	public void updateUI(int type, Object[] params) {
-		if (type == UPDATE_NEWMESSAGE) {
-			receiveArea.append((String)params[0]);
-		}
-		else if(type == UPDATE_CLOSE) {
-		
-		}
-		else if(type == UPDATE_CONNECTSTATE) {
-			//statebar.setText("params")
-		}
-		else if(type == UPDATE_SENDFILE) {
-
-		}
-	}
-
-	public void updateUISend(int type, Object[] params) {
-		if (type == UPDATE_NEWMESSAGE) {
-			receiveArea.append((String)params[0]);
+		switch(type){
+		case UPDATE_NEWMESSAGE:
+			appendReceiveText((String)params[0],Color.blue);
+			break;
+		case UPDATE_CLOSE:
+			break;
+		case UPDATE_CONNECTSTATE:
+			break;
+		case UPDATE_SENDFILE:
+			break;
+		case UPDATE_NEWMESSAGE_MYSELF:
+			appendReceiveText((String)params[0],Color.blue);
 			sendArea.setText("");
-		}
-		else if (type == UPDATE_SENDFILE) {
+			break;
+		case UPDATE_SENDFILE_MYSELF:
 			 filename.setText(files[0].getName());
 		     size.setText(Long.toString(files[0].length()/1024)+"K");
-		}
-		else if (type == UPDATE_CLOSE) {
+		     break;
+		case  UPDATE_CLOSE_MYSELF:
 			frame.setVisible(false);
-		}
-		else if (type == UPDATE_CONNECTSTATE) {
-			
+			break;
+		case UPDATE_CONNECTSTATE_MYSELF:
+			break;
 		}
 	}
 
@@ -87,19 +88,16 @@ public class FrameChating extends Performer {
 
 		JPanel msgPanel = new JPanel();
 		msgPanel.setLayout(new BorderLayout());
-		JPanel recePanel = new JPanel();
-		recePanel.setLayout(new BorderLayout());
-		receiveArea = new TextArea();
-		recePanel.add(receiveArea,BorderLayout.CENTER);
-		recePanel.setBorder(BorderFactory.createEtchedBorder());
-		JPanel sendPanel = new JPanel();
-		sendPanel.setLayout(new BorderLayout());
+		receiveText = new JTextPane();
+		JScrollPane recepane = new JScrollPane(receiveText);
+		recepane.setBorder(BorderFactory.createEtchedBorder());
 		sendArea = new JTextArea();
-		sendPanel.add(sendArea,BorderLayout.CENTER);
-		sendPanel.setBorder(BorderFactory.createEtchedBorder());
-		sendPanel.setPreferredSize(new Dimension(180,100));
-		msgPanel.add(recePanel,BorderLayout.CENTER);
-		msgPanel.add(sendPanel,BorderLayout.SOUTH);
+		sendArea.setLineWrap(true);
+		JScrollPane sendpane = new JScrollPane(sendArea);
+		sendpane.setBorder(BorderFactory.createEtchedBorder());
+		sendpane.setPreferredSize(new Dimension(180,100));
+		msgPanel.add(recepane,BorderLayout.CENTER);
+		msgPanel.add(sendpane,BorderLayout.SOUTH);
 		
 		ImageIcon icon=new  ImageIcon(getClass().getResource("picture.jpg"));
 	    ImagePanel infoPanel=new ImagePanel(icon);//±³¾°Í¼Æ¬  
@@ -178,7 +176,7 @@ public class FrameChating extends Performer {
 		 save.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
 					Object[] params = new Object[1];
-					params[0] = receiveArea.getText().replaceAll("\n","\r\n");
+					params[0] = receiveText.getText().replaceAll("\n","\r\n");
 					controler.processUIAction(ChatingControler.AC_SAVECHATLOG, params);
 				}
 			 });
@@ -189,8 +187,23 @@ public class FrameChating extends Performer {
 				}
 			});	 
 	  }
-}
 
+
+	public void appendReceiveText(String sendInfo, Color color) {
+		javax.swing.text.Style style = receiveText.addStyle("title", null);
+		if (color != null) {
+			StyleConstants.setForeground(style, color);
+		} else {
+			StyleConstants.setForeground(style, Color.BLACK);
+		}
+		receiveText.setEditable(true);
+		receiveText.setCaretPosition(receiveText.getDocument().getLength());
+		receiveText.setCharacterAttributes(style, false);
+		receiveText.replaceSelection(sendInfo);
+		receiveText.setEditable(false);
+	}
+}
+	
 class ImagePanel extends JPanel {
 	
 	 private Image img;
@@ -211,4 +224,5 @@ class ImagePanel extends JPanel {
     		this.img=img.getImage();
     		}
     }
+	
 }

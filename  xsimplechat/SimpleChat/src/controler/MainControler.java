@@ -6,8 +6,14 @@ import server.*;
 import ui.*;
 import util.Toolkit;
 
+import java.io.FileWriter;
+import java.io.IOException;
 import java.net.*;
 import java.util.*;
+import java.io.*;
+
+import javax.swing.JFileChooser;
+import javax.swing.JOptionPane;
 
 public class MainControler extends Controler {
 
@@ -25,6 +31,7 @@ public class MainControler extends Controler {
 			.synchronizedMap(new HashMap<ClientInfo, Long>());
 	private byte[] identifyInfo;
 	private String nickName;
+	private File selectfile;
 
 	public static final String HEADER_HEARTBEAT = Toolkit.padString("HEARTBEAT", SIZE_HEADER);
 	public static final String HEADER_GROUPMESSAGE = Toolkit.padString("GROUPMESSAGE", SIZE_HEADER);
@@ -118,16 +125,40 @@ public class MainControler extends Controler {
 		}
 	}
 
-	public static final int AC_SEND_MESSAGE = 1;
-	public static final int AC_CLOSE_WINDOW = 2;
-	public static final int AC_SINGLE_TALK = 3;
+	public static final int AC_LOGIN = 1;
+	public static final int AC_SEND_MESSAGE = 2;
+	public static final int AC_CLOSE_WINDOW = 3;
+	public static final int AC_SINGLE_TALK = 4;
+	public static final int AC_SAVE_CHATLOG = 5;
 
 	@Override
 	public void processUIAction(int type, Object[] params) {
 		switch (type) {
+		case AC_LOGIN:
+			performer.updateUI(FrameMain.UPDATE_LOGIN, params);
+			break;
 		case AC_SEND_MESSAGE:
 			networker.send(0, Toolkit.generateSendData(HEADER_GROUPMESSAGE, (byte[]) Toolkit
 					.mergeArray(identifyInfo, ((String) params[0]).getBytes())));
+			break;
+		case AC_SAVE_CHATLOG:
+	        JFileChooser jfc = new JFileChooser( );  
+            int r = jfc.showDialog(null, "±£´æ");   
+               if (r == JFileChooser.APPROVE_OPTION) {   
+               selectfile = jfc.getSelectedFile();   
+               try{
+               	FileWriter output = new FileWriter(selectfile.getPath()+".txt");
+               	output.write((String)params[0]);
+               	output.close();
+               	JOptionPane.showMessageDialog(null, "±£´æÍê±Ï","GUIDES",JOptionPane.INFORMATION_MESSAGE);
+               }
+               catch(IOException ex) {
+               	JOptionPane.showMessageDialog(null, "The file does not exist.","GUIDES",JOptionPane.INFORMATION_MESSAGE);
+               }
+            }
+              break;
+		case AC_CLOSE_WINDOW:
+			performer.updateUI(FrameMain.UPDATE_CLOSEWINDOW, params);
 			break;
 		}
 	}
