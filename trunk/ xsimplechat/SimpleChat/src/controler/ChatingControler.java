@@ -85,8 +85,10 @@ public class ChatingControler extends Controler {
 		if (type == AC_SENDMESSAGE) {
 			networker.send(sid++, Toolkit.generateSendData(HEADER_MESSAGE, (new Date().getTime()
 					+ " " + params[0]).getBytes()));
+			performer.updateUI(FrameChating.UPDATE_NEWMESSAGE_MYSELF, params);
 		}
 		else if (type == AC_SENDFILE) {
+			performer.updateUI(FrameChating.UPDATE_SENDFILE_MYSELF, params);
 		}
 		else if (type == AC_SAVECHATLOG) {
 	        JFileChooser jfc = new JFileChooser( );  
@@ -102,10 +104,11 @@ public class ChatingControler extends Controler {
                catch(IOException ex) {
                	JOptionPane.showMessageDialog(null, "The file does not exist.","GUIDES",JOptionPane.INFORMATION_MESSAGE);
                }
-}
+            }
 		}
 		else if (type == AC_CLOSEWINDOW) {
 			performer.updateUI(FrameChating.UPDATE_CLOSE, params);
+			performer.updateUI(FrameChating.UPDATE_CLOSE_MYSELF, params);
 			networker.closeNetworker();
 		}
 	}
