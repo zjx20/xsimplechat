@@ -37,9 +37,8 @@ public class FrameChating extends Performer {
 	private JProgressBar bar;
 	private File selectfile;
 	private File[] files;
-	private JFrame  frame;
+	private JFrame frame;
 
-	
 	public FrameChating(Controler controler1) {
 		super(controler1);
 		setEvent();
@@ -53,12 +52,13 @@ public class FrameChating extends Performer {
 	public static final int UPDATE_CLOSE_MYSELF = 6;
 	public static final int UPDATE_CONNECTSTATE_MYSELF = 7;
 	public static final int UPDATE_SENDFILE_MYSELF = 8;
-	
+	public static final int UPDATE_FILE_REQUEST = 9;
+
 	@Override
 	public void updateUI(int type, Object[] params) {
-		switch(type){
+		switch (type) {
 		case UPDATE_NEWMESSAGE:
-			appendReceiveText((String)params[0],Color.blue);
+			appendReceiveText((String) params[0], Color.blue);
 			break;
 		case UPDATE_CLOSE:
 			break;
@@ -67,14 +67,14 @@ public class FrameChating extends Performer {
 		case UPDATE_SENDFILE:
 			break;
 		case UPDATE_NEWMESSAGE_MYSELF:
-			appendReceiveText((String)params[0],Color.blue);
+			appendReceiveText((String) params[0], Color.blue);
 			sendArea.setText("");
 			break;
 		case UPDATE_SENDFILE_MYSELF:
-			 filename.setText(files[0].getName());
-		     size.setText(Long.toString(files[0].length()/1024)+"K");
-		     break;
-		case  UPDATE_CLOSE_MYSELF:
+			filename.setText(files[0].getName());
+			size.setText(Long.toString(files[0].length() / 1024) + "K");
+			break;
+		case UPDATE_CLOSE_MYSELF:
 			frame.setVisible(false);
 			break;
 		case UPDATE_CONNECTSTATE_MYSELF:
@@ -95,12 +95,12 @@ public class FrameChating extends Performer {
 		sendArea.setLineWrap(true);
 		JScrollPane sendpane = new JScrollPane(sendArea);
 		sendpane.setBorder(BorderFactory.createEtchedBorder());
-		sendpane.setPreferredSize(new Dimension(180,100));
-		msgPanel.add(recepane,BorderLayout.CENTER);
-		msgPanel.add(sendpane,BorderLayout.SOUTH);
-		
-		ImageIcon icon=new  ImageIcon(getClass().getResource("picture.jpg"));
-	    ImagePanel infoPanel=new ImagePanel(icon);//背景图片  
+		sendpane.setPreferredSize(new Dimension(180, 100));
+		msgPanel.add(recepane, BorderLayout.CENTER);
+		msgPanel.add(sendpane, BorderLayout.SOUTH);
+
+		ImageIcon icon = new ImageIcon(getClass().getResource("picture.jpg"));
+		ImagePanel infoPanel = new ImagePanel(icon);//背景图片  
 		labname = new JLabel("对方昵称:");
 		labfilename = new JLabel("文件名称:");
 		labsize = new JLabel("文件大小:");
@@ -109,12 +109,12 @@ public class FrameChating extends Performer {
 		filename = new JLabel("");
 		size = new JLabel("");
 		bar = new JProgressBar();
-		infoPanel.setPreferredSize(new Dimension(180,360));
-		name.setPreferredSize(new Dimension(100,20));
-		filename.setPreferredSize(new Dimension(100,20));
-		size.setPreferredSize(new Dimension(100,20));
-		bar.setPreferredSize(new Dimension(100,20));
-		
+		infoPanel.setPreferredSize(new Dimension(180, 360));
+		name.setPreferredSize(new Dimension(100, 20));
+		filename.setPreferredSize(new Dimension(100, 20));
+		size.setPreferredSize(new Dimension(100, 20));
+		bar.setPreferredSize(new Dimension(100, 20));
+
 		infoPanel.setLayout(new FlowLayout());
 		infoPanel.add(labname);
 		infoPanel.add(name);
@@ -136,58 +136,57 @@ public class FrameChating extends Performer {
 		menuPanel.add(save);
 		menuPanel.add(close);
 		menuPanel.setBorder(BorderFactory.createEtchedBorder());
-		
+
 		JFrame.setDefaultLookAndFeelDecorated(true);
 		frame = new JFrame();
 		frame.setLayout(new BorderLayout());
-		frame.getContentPane().add(msgPanel,BorderLayout.CENTER);
-		frame.getContentPane().add(infoPanel,BorderLayout.EAST);
-		frame.getContentPane().add(menuPanel,BorderLayout.SOUTH);
-		frame.setSize(550,500);
+		frame.getContentPane().add(msgPanel, BorderLayout.CENTER);
+		frame.getContentPane().add(infoPanel, BorderLayout.EAST);
+		frame.getContentPane().add(menuPanel, BorderLayout.SOUTH);
+		frame.setSize(550, 500);
 		frame.setVisible(true);
 		frame.setLocationRelativeTo(null);
 		frame.setResizable(false);
 
 	}
-	
-	void setEvent(){
+
+	void setEvent() {
 		sendmsg.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				Object[] params=new Object[1];
-				params[0] = " ("+new Date().toLocaleString()+")"+"\n"+"   ";
-				params[0] = params[0]+sendArea.getText()+"\n";
+				Object[] params = new Object[1];
+				params[0] = " (" + new Date().toLocaleString() + ")" + "\n" + "   ";
+				params[0] = params[0] + sendArea.getText() + "\n";
 				controler.processUIAction(ChatingControler.AC_SENDMESSAGE, params);
 			}
 		});
-		
+
 		sendfile.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				Object[] params=new Object[1];
-				   JFileChooser chooser = new JFileChooser();
-				    chooser.setMultiSelectionEnabled(true);
-				    chooser.showOpenDialog(null);
-				     files = chooser.getSelectedFiles();
-				     controler.processUIAction(ChatingControler.AC_SENDFILE, params);	
+				Object[] params = new Object[1];
+				JFileChooser chooser = new JFileChooser();
+				chooser.setMultiSelectionEnabled(true);
+				chooser.showOpenDialog(null);
+				files = chooser.getSelectedFiles();
+				controler.processUIAction(ChatingControler.AC_SENDFILE, params);
 			}
 		});
-		
-		 save.addActionListener(new ActionListener() {
-				public void actionPerformed(ActionEvent e) {
-					Object[] params = new Object[1];
-					params[0] = receiveText.getText().replaceAll("\n","\r\n");
-					controler.processUIAction(ChatingControler.AC_SAVECHATLOG, params);
-				}
-			 });
-		 
-			close.addActionListener(new ActionListener() {
-				public void actionPerformed(ActionEvent e) {
-					controler.processUIAction(ChatingControler.AC_CLOSEWINDOW, null);	
-				}
-			});	 
-	  }
 
+		save.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				Object[] params = new Object[1];
+				params[0] = receiveText.getText().replaceAll("\n", "\r\n");
+				controler.processUIAction(ChatingControler.AC_SAVECHATLOG, params);
+			}
+		});
+
+		close.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				controler.processUIAction(ChatingControler.AC_CLOSEWINDOW, null);
+			}
+		});
+	}
 
 	public void appendReceiveText(String sendInfo, Color color) {
 		javax.swing.text.Style style = receiveText.addStyle("title", null);
@@ -203,26 +202,26 @@ public class FrameChating extends Performer {
 		receiveText.setEditable(false);
 	}
 }
-	
+
 class ImagePanel extends JPanel {
-	
-	 private Image img;
-	 
+
+	private Image img;
+
 	public ImagePanel(ImageIcon imageIcon) {
 		setOpaque(false);
-		img=imageIcon.getImage();
-		setPreferredSize(new Dimension(imageIcon.getIconWidth(),imageIcon.getIconHeight()));
-		}
-		
+		img = imageIcon.getImage();
+		setPreferredSize(new Dimension(imageIcon.getIconWidth(), imageIcon.getIconHeight()));
+	}
+
 	protected void paintComponent(Graphics g) {
 		super.paintComponent(g);
-		g.drawImage(img,0,0,this);
-		}
-                
+		g.drawImage(img, 0, 0, this);
+	}
+
 	public void setImage(ImageIcon img) {
-    	if(img!=null) {
-    		this.img=img.getImage();
-    		}
-    }
-	
+		if (img != null) {
+			this.img = img.getImage();
+		}
+	}
+
 }

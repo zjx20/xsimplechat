@@ -88,4 +88,68 @@ public class Toolkit {
 		System.arraycopy(array, pos, result, 0, length);
 		return result;
 	}
+
+	/**
+	 * <p>将int转换成4个元素的byte数组</p>
+	 * <p>最低8位放在byte[0]，次低8位放在byte[1]，以此类推<p>
+	 * @param x 需要转换的整数
+	 * @return byte数组
+	 */
+	public static byte[] intToByteArray(int x) {
+		byte[] result = new byte[4];
+		int i, mask = 0xff;
+		for (i = 0; i < 4; i++) {
+			result[i] = (byte) (x & mask);
+			x >>>= 8;
+		}
+		return result;
+	}
+
+	/**
+	 * <p>将4个元素的byte数组转换成int</p>
+	 * <p>byte[0]存放整数的最低8位，byte[1]存放次低8位，以此类推</p>
+	 * @param a byte数组
+	 * @return 整数
+	 */
+	public static int byteArrayToInt(byte[] a) {
+		int result = 0;
+		int i, mask = 0xff;
+		for (i = 3; i >= 0; i--) {
+			result <<= 8;
+			result |= (a[i] & mask);
+		}
+		return result;
+	}
+	
+	/**
+	 * <p>将long转换成8个元素的byte数组</p>
+	 * <p>最低8位放在byte[0]，次低8位放在byte[1]，以此类推<p>
+	 * @param x 需要转换的整数
+	 * @return byte数组
+	 */
+	public static byte[] longToByteArray(long x) {
+		byte[] result = new byte[8];
+		int i, mask = 0xff;
+		for (i = 0; i < 8; i++) {
+			result[i] = (byte) (x & mask);
+			x >>>= 8;
+		}
+		return result;
+	}
+
+	/**
+	 * <p>将8个元素的byte数组转换成long</p>
+	 * <p>byte[0]存放整数的最低8位，byte[1]存放次低8位，以此类推</p>
+	 * @param a byte数组
+	 * @return 整数
+	 */
+	public static long byteArrayToLong(byte[] a) {
+		long result = 0;
+		int i, mask = 0xff;
+		for (i = 7; i >= 0; i--) {
+			result <<= 8;
+			result |= (a[i] & mask);
+		}
+		return result;
+	}
 }
