@@ -12,7 +12,7 @@ import java.net.*;
  */
 public class MulticastNetworker extends Networker {
 
-	private static String DEFAULT_GROUP_IPADDRESS = "230.0.0.1";
+	public static String DEFAULT_GROUP_IPADDRESS = "230.0.0.1";
 	private MulticastSocket rSocket, sSocket;
 	private InetAddress group;
 
@@ -28,6 +28,7 @@ public class MulticastNetworker extends Networker {
 
 	private boolean startSign = false, endSign = false;
 	private ByteArrayOutputStream tempStream = new ByteArrayOutputStream();
+	private byte[] buf = new byte[DEFAULT_BUFFER_SIZE];
 
 	@Override
 	protected void receiveData() {
@@ -38,7 +39,6 @@ public class MulticastNetworker extends Networker {
 				//rSocket.setLoopbackMode(true); //不接收本机信息
 			}
 
-			byte[] buf = new byte[DEFAULT_BUFFER_SIZE];
 			DatagramPacket packet = new DatagramPacket(buf, buf.length);
 			rSocket.receive(packet);
 			int amount = packet.getLength();

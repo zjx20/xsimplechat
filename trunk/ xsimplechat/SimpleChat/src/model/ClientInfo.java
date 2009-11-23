@@ -125,17 +125,23 @@ public class ClientInfo {
 
 	@Override
 	public boolean equals(Object obj) {
-		// TODO Auto-generated method stub
+		if (!(obj instanceof ClientInfo))
+			return false;
 		return this.uuid.compareTo(((ClientInfo) obj).getUuid()) == 0;
+	}
+
+	@Override
+	public int hashCode() {
+		return uuid.hashCode();
 	}
 
 	@Override
 	public String toString() {
 		String result = "";
-		result += "UUID:" + uuid + "\n";
-		result += "IPAddress:" + ipAddress.getHostAddress() + "\n";
-		result += "Port:" + port + "\n";
 		result += "NickName:" + nickName + "\n";
+		result += "IPAddress:" + ipAddress.getHostAddress() + "\n";
+		//result += "UUID:" + uuid + "\n";
+		//result += "Port:" + port + "\n";
 		return result;
 	}
 }

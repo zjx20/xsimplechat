@@ -5,8 +5,6 @@ import model.*;
 import java.io.*;
 import java.net.*;
 
-import controler.ChatingControler;
-
 /**
  * <p>基于socket的单播networker</p>
  * @author X
@@ -14,9 +12,7 @@ import controler.ChatingControler;
  */
 public class UnicastNetworker extends Networker {
 
-	static final Object lock=new Object();
-
-	private Socket socket;
+	protected Socket socket;
 
 	public UnicastNetworker(Socket socket, Controler controler) {
 		super(controler);
@@ -25,6 +21,7 @@ public class UnicastNetworker extends Networker {
 
 	private boolean startSign = false, endSign = false;
 	private ByteArrayOutputStream tempStream = new ByteArrayOutputStream();
+	private byte[] buf = new byte[DEFAULT_BUFFER_SIZE];
 
 	@Override
 	protected void receiveData() {
@@ -33,14 +30,10 @@ public class UnicastNetworker extends Networker {
 			closeNetworker();
 			return;
 		}
-		byte[] buf = new byte[DEFAULT_BUFFER_SIZE];
+
 		int amount;
 		try {
 			amount = socket.getInputStream().read(buf);
-			synchronized (lock) {
-				System.out.print(Thread.currentThread() + " res ");
-				ChatingControler.printByte(buf, amount);
-			}
 			if (amount <= 0)
 				return;
 			int i = 0;
@@ -92,28 +85,16 @@ public class UnicastNetworker extends Networker {
 			return;
 		}
 
-		int count = 0;
-		while (count < DEFAULT_RETRY_TIME) {
-			try {
-				synchronized (lock) {
-					System.out.print(Thread.currentThread() + " send ");
-					ChatingControler.printByte(encodeForSend(s.getMsg()));
-				}
-				socket.getOutputStream().write(encodeForSend(s.getMsg()));
-				socket.getOutputStream().flush();
-			} catch (IOException e) {
-				e.printStackTrace();
-				count++;
-				try {
-					Thread.sleep(DEFAULT_INTERVAL); //等待一段时间重新发送
-				} catch (InterruptedException e1) {
-					e1.printStackTrace();
-				}
-				continue;
-			}
-			break;
+		boolean result;
+		try {
+			socket.getOutputStream().write(encodeForSend(s.getMsg()));
+			socket.getOutputStream().flush();
+			result = true;
+		} catch (IOException e) {
+			e.printStackTrace();
+			result = false;
 		}
-		controler.receipt(s.getSid(), count < DEFAULT_RETRY_TIME);
+		controler.receipt(s.getSid(), result);
 	}
 
 	@Override
@@ -129,4 +110,3 @@ public class UnicastNetworker extends Networker {
 		}
 	}
 }
-

@@ -85,7 +85,9 @@ public class MainControler extends Controler {
 		while (it.hasNext()) {
 			ClientInfo c = it.next();
 			if (now - lastReceive.get(c).longValue() > TIME_JUDGE_DEAD) {
-				// TODO 通知下线
+				Object[] params = new Object[1];
+				params[0] = c;
+				performer.updateUI(FrameMain.UPDATE_LOGOUT, params);
 				lastReceive.remove(c);
 				it.remove();
 			}
@@ -97,8 +99,10 @@ public class MainControler extends Controler {
 	 * @param clientInfo 客户端信息
 	 */
 	private void receiveFromClient(ClientInfo clientInfo) {
-		if (!existedClient.contains(clientInfo.getUuid())) {
-			// TODO 更新上线
+		if (!existedClient.contains(clientInfo)) {
+			Object[] params = new Object[1];
+			params[0] = clientInfo;
+			performer.updateUI(FrameMain.UPDATE_LOGIN, params);
 			existedClient.add(clientInfo);
 		}
 		lastReceive.put(clientInfo, new Long(new Date().getTime()));
@@ -108,7 +112,6 @@ public class MainControler extends Controler {
 	public void processRawData(byte[] buf) {
 		// TODO Auto-generated method stub
 		String header = new String(buf, 0, SIZE_HEADER);
-		System.out.println("header:" + header);
 		if (header.compareTo(HEADER_GROUPMESSAGE) == 0) {
 			byte[] id = (byte[]) Toolkit.cutArray(buf, SIZE_HEADER, ClientInfo.SIZE_IDENTIFYINFO);
 			ClientInfo clientInfo = ClientInfo.parseClientInfo(id);
@@ -142,23 +145,33 @@ public class MainControler extends Controler {
 					.mergeArray(identifyInfo, ((String) params[0]).getBytes())));
 			break;
 		case AC_SAVE_CHATLOG:
-	        JFileChooser jfc = new JFileChooser( );  
-            int r = jfc.showDialog(null, "保存");   
-               if (r == JFileChooser.APPROVE_OPTION) {   
-               selectfile = jfc.getSelectedFile();   
-               try{
-               	FileWriter output = new FileWriter(selectfile.getPath()+".txt");
-               	output.write((String)params[0]);
-               	output.close();
-               	JOptionPane.showMessageDialog(null, "保存完毕","GUIDES",JOptionPane.INFORMATION_MESSAGE);
-               }
-               catch(IOException ex) {
-               	JOptionPane.showMessageDialog(null, "The file does not exist.","GUIDES",JOptionPane.INFORMATION_MESSAGE);
-               }
-            }
-              break;
+			JFileChooser jfc = new JFileChooser();
+			int r = jfc.showDialog(null, "保存");
+			if (r == JFileChooser.APPROVE_OPTION) {
+				selectfile = jfc.getSelectedFile();
+				try {
+					FileWriter output = new FileWriter(selectfile.getPath() + ".txt");
+					output.write((String) params[0]);
+					output.close();
+					JOptionPane.showMessageDialog(null, "保存完毕", "GUIDES",
+							JOptionPane.INFORMATION_MESSAGE);
+				} catch (IOException ex) {
+					JOptionPane.showMessageDialog(null, "The file does not exist.", "GUIDES",
+							JOptionPane.INFORMATION_MESSAGE);
+				}
+			}
+			break;
 		case AC_CLOSE_WINDOW:
 			performer.updateUI(FrameMain.UPDATE_CLOSEWINDOW, params);
+			break;
+		case AC_SINGLE_TALK:
+			ClientInfo target = (ClientInfo) params[0];
+			try {
+				Socket socket = new Socket(target.getIpAddress(),target.getPort());
+				new ChatingControler(socket);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 			break;
 		}
 	}
