@@ -2,6 +2,7 @@ package ui;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
@@ -38,6 +39,13 @@ public class FrameChating extends Performer {
 	private File selectfile;
 	private File[] files;
 	private JFrame frame;
+	private JFrame sendframe;
+	private JLabel labsendname;
+	private JLabel sendname;
+	private JLabel labsendsize;
+	private JLabel sendsize;
+	private JButton accept;
+	private JButton refuse;
 
 	public FrameChating(Controler controler1) {
 		super(controler1);
@@ -53,6 +61,11 @@ public class FrameChating extends Performer {
 	public static final int UPDATE_CONNECTSTATE_MYSELF = 7;
 	public static final int UPDATE_SENDFILE_MYSELF = 8;
 	public static final int UPDATE_FILE_REQUEST = 9;
+	public static final int UPDATE_ACCEPT_FILE = 10;
+	public static final int UPDATE_REFUSE_FILE = 11;
+	public static final int UPDATE_ACCEPT_FILE_REQUEST = 12;
+	
+private String tempfile;
 
 	@Override
 	public void updateUI(int type, Object[] params) {
@@ -63,6 +76,7 @@ public class FrameChating extends Performer {
 		case UPDATE_CLOSE:
 			break;
 		case UPDATE_CONNECTSTATE:
+			bar.setString(" " + "%");
 			break;
 		case UPDATE_SENDFILE:
 			break;
@@ -71,14 +85,38 @@ public class FrameChating extends Performer {
 			sendArea.setText("");
 			break;
 		case UPDATE_SENDFILE_MYSELF:
-			filename.setText(files[0].getName());
-			size.setText(Long.toString(files[0].length() / 1024) + "K");
 			break;
 		case UPDATE_CLOSE_MYSELF:
 			frame.setVisible(false);
 			break;
 		case UPDATE_CONNECTSTATE_MYSELF:
+			bar.setString(" " + "%");
 			break;
+		case UPDATE_FILE_REQUEST:
+			tempfile=(String)params[0];
+			generateFileUI();
+			setFileEvent();
+			break;
+		case UPDATE_ACCEPT_FILE:
+			JOptionPane
+					.showMessageDialog(null, "对方同意发送文件", "文件传输", JOptionPane.INFORMATION_MESSAGE);
+			labfilename.setVisible(true);
+			labsize.setVisible(true);
+			labbar.setVisible(true);
+			bar.setVisible(true);
+			filename.setText(files[0].getName());
+			size.setText(Long.toString(files[0].length() / 1024) + "K");
+			break;
+		case UPDATE_REFUSE_FILE:
+			JOptionPane
+					.showMessageDialog(null, "对方拒绝发送文件", "文件传输", JOptionPane.INFORMATION_MESSAGE);
+		case UPDATE_ACCEPT_FILE_REQUEST:
+			labfilename.setVisible(true);
+			//filename.setText((String)params[0]);
+			labsize.setVisible(true);
+			//size.setText((String)params[1]);
+			labbar.setVisible(true);
+			bar.setVisible(true);
 		}
 	}
 
@@ -103,12 +141,18 @@ public class FrameChating extends Performer {
 		ImagePanel infoPanel = new ImagePanel(icon);//背景图片  
 		labname = new JLabel("对方昵称:");
 		labfilename = new JLabel("文件名称:");
+		labfilename.setVisible(false);
 		labsize = new JLabel("文件大小:");
+		labsize.setVisible(false);
 		labbar = new JLabel("传输进度:");
+		labbar.setVisible(false);
 		name = new JLabel("");
 		filename = new JLabel("");
 		size = new JLabel("");
 		bar = new JProgressBar();
+		bar.setBackground(Color.white);
+		bar.setVisible(false);
+		bar.setStringPainted(true);
 		infoPanel.setPreferredSize(new Dimension(180, 360));
 		name.setPreferredSize(new Dimension(100, 20));
 		filename.setPreferredSize(new Dimension(100, 20));
@@ -169,6 +213,7 @@ public class FrameChating extends Performer {
 				chooser.setMultiSelectionEnabled(true);
 				chooser.showOpenDialog(null);
 				files = chooser.getSelectedFiles();
+				params[0] = files[0];
 				controler.processUIAction(ChatingControler.AC_SENDFILE, params);
 			}
 		});
@@ -201,6 +246,67 @@ public class FrameChating extends Performer {
 		receiveText.replaceSelection(sendInfo);
 		receiveText.setEditable(false);
 	}
+
+	protected void generateFileUI() {
+		JFrame.setDefaultLookAndFeelDecorated(true);
+		sendframe = new JFrame();
+		sendframe.setLayout(null);
+		Container sendpanel = sendframe.getContentPane();
+		labsendname = new JLabel("文件名称:");
+		labsendname.setBounds(10, 60, 55, 25);
+		sendpanel.add(labsendname);
+		sendname = new JLabel("");
+		//	sendname.setText((String) params[0]);
+		sendname.setBounds(70, 60, 100, 25);
+		sendpanel.add(sendname);
+		labsendsize = new JLabel("文件大小:");
+		labsendsize.setBounds(10, 90, 55, 25);
+		sendpanel.add(labsendsize);
+		sendsize = new JLabel("");
+		//	sendsize.setText((String) params[1]);
+		sendsize.setBounds(70, 90, 100, 25);
+		sendpanel.add(sendsize);
+		accept = new JButton("接收");
+		accept.setBounds(10, 200, 100, 30);
+		sendpanel.add(accept);
+		refuse = new JButton("拒绝");
+		refuse.setBounds(150, 200, 100, 30);
+		sendpanel.add(refuse);
+		sendframe.setSize(300, 300);
+		sendframe.setVisible(true);
+		sendframe.setLocationRelativeTo(null);
+		sendframe.setResizable(false);
+	}
+
+	void setFileEvent() {
+		accept.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				JFileChooser jfc = new JFileChooser();
+				jfc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+
+				int r = jfc.showDialog(null, "保存路径");
+				if (r == JFileChooser.APPROVE_OPTION) {
+					selectfile = jfc.getSelectedFile();
+				}
+				Object[] params = new Object[2];
+				params[0] = tempfile;
+				params[1] = selectfile.getPath();
+				sendframe.setVisible(false);
+				controler.processUIAction(ChatingControler.AC_ACCEPT_FILEREQUEST, params);
+			}
+		});
+
+		refuse.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				sendframe.setVisible(false);
+				Object[] params = { tempfile };
+				controler.processUIAction(ChatingControler.AC_REFUSE_FILEREQUEST, params);
+			}
+		});
+	}
+
 }
 
 class ImagePanel extends JPanel {

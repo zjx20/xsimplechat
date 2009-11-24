@@ -6,12 +6,10 @@ import networker.*;
 import util.*;
 
 import java.net.*;
-import java.util.Date;
-import java.util.HashMap;
+import java.util.*;
 import java.io.*;
 
-import javax.swing.JFileChooser;
-import javax.swing.JOptionPane;
+import javax.swing.*;
 
 /**
  * <p>私聊专用controler</p>
@@ -26,7 +24,8 @@ public class ChatingControler extends Controler {
 	public static final int AC_CLOSEWINDOW = 2;
 	public static final int AC_SENDFILE = 3;
 	public static final int AC_SAVECHATLOG = 4;
-	public static final int AC_ACCEPTFILE = 5;
+	public static final int AC_ACCEPT_FILEREQUEST = 5;
+	public static final int AC_REFUSE_FILEREQUEST = 6;
 
 	public static final int SIZE_HEADER = 16;
 	public static final int SIZE_FILENAME = 255; //传送的文件名不超过255个字符
@@ -35,6 +34,7 @@ public class ChatingControler extends Controler {
 	public static final String HEADER_MESSAGE = Toolkit.padString("MESSAGE", SIZE_HEADER);
 	public static final String HEADER_FILE = Toolkit.padString("FILE", SIZE_HEADER);
 	public static final String HEADER_FILE_ACCEPT = Toolkit.padString("FILEACCEPT", SIZE_HEADER);
+	public static final String HEADER_FILE_REFUSE = Toolkit.padString("FILEREFUSE", SIZE_HEADER);
 
 	private HashMap<String, File> fileMap = new HashMap<String, File>();
 	private long sid = 0;
@@ -61,12 +61,14 @@ public class ChatingControler extends Controler {
 		String header = new String(buf, 0, SIZE_HEADER);
 		//System.out.println("receive header:" + header);
 		if (header.compareTo(HEADER_MESSAGE) == 0) {
+
 			if (peerClientInfo == null) {
 				networker.closeNetworker();
 			}
 			Object[] params = new Object[1];
 			params[0] = new String(buf, SIZE_HEADER, buf.length - SIZE_HEADER);
 			performer.updateUI(FrameChating.UPDATE_NEWMESSAGE, params);
+
 		} else if (header.compareTo(HEADER_FILE) == 0) {
 			//请求接收文件
 			String fileName = new String(buf, SIZE_HEADER, SIZE_FILENAME).trim();
@@ -77,11 +79,19 @@ public class ChatingControler extends Controler {
 
 		} else if (header.compareTo(HEADER_FILE_ACCEPT) == 0) {
 			//对方接受文件请求
+			performer.updateUI(FrameChating.UPDATE_ACCEPT_FILE, null);
 			String fileName = new String(buf, SIZE_HEADER, SIZE_FILENAME).trim();
 			int port = Toolkit.byteArrayToInt((byte[]) Toolkit.cutArray(buf, SIZE_HEADER
 					+ SIZE_FILENAME, 4));
 			sendFile(peerClientInfo, port, fileMap.get(fileName));
-			
+			fileMap.remove(fileName);
+
+		} else if (header.compareTo(HEADER_FILE_REFUSE) == 0) {
+			//对方拒接文件请求
+			performer.updateUI(FrameChating.UPDATE_REFUSE_FILE, null);
+			String fileName = new String(buf, SIZE_HEADER, SIZE_FILENAME).trim();
+			fileMap.remove(fileName);
+
 		} else if (header.compareTo(HEADER_CLIENTINFO) == 0) {
 
 			byte[] temp = new byte[ClientInfo.SIZE_IDENTIFYINFO];
@@ -100,10 +110,13 @@ public class ChatingControler extends Controler {
 	@Override
 	public void processUIAction(int type, Object[] params) {
 		if (type == AC_SENDMESSAGE) {
+
 			networker.send(sid++, Toolkit.generateSendData(HEADER_MESSAGE, (new Date().getTime()
 					+ " " + params[0]).getBytes()));
 			performer.updateUI(FrameChating.UPDATE_NEWMESSAGE_MYSELF, params);
+
 		} else if (type == AC_SENDFILE) {
+
 			performer.updateUI(FrameChating.UPDATE_SENDFILE_MYSELF, params);
 			File sendFile = (File) params[0];
 			ByteArrayOutputStream os = new ByteArrayOutputStream();
@@ -112,7 +125,10 @@ public class ChatingControler extends Controler {
 					SIZE_FILENAME); //文件名
 			os.write(Toolkit.longToByteArray(sendFile.length()), 0, 8);
 			networker.send(sid++, os.toByteArray());
+			fileMap.put(sendFile.getName(), sendFile);
+
 		} else if (type == AC_SAVECHATLOG) {
+
 			JFileChooser jfc = new JFileChooser();
 			int r = jfc.showDialog(null, "保存");
 			if (r == JFileChooser.APPROVE_OPTION) {
@@ -128,11 +144,14 @@ public class ChatingControler extends Controler {
 							JOptionPane.INFORMATION_MESSAGE);
 				}
 			}
+
 		} else if (type == AC_CLOSEWINDOW) {
+
 			performer.updateUI(FrameChating.UPDATE_CLOSE, params);
 			performer.updateUI(FrameChating.UPDATE_CLOSE_MYSELF, params);
 			networker.closeNetworker();
-		} else if (type == AC_ACCEPTFILE) {
+
+		} else if (type == AC_ACCEPT_FILEREQUEST) {
 			//接受文件请求，需要参数：String sendFileName,File localFile
 			ServerSocket serverSocket = null;
 			try {
@@ -143,18 +162,31 @@ public class ChatingControler extends Controler {
 				e.printStackTrace();
 				return;
 			}
+			recieveFile(serverSocket, new File((String) params[1]));
 			ByteArrayOutputStream os = new ByteArrayOutputStream();
 			os.write(HEADER_FILE_ACCEPT.getBytes(), 0, SIZE_HEADER);
 			os.write(Toolkit.padString((String) params[0], SIZE_FILENAME).getBytes(), 0,
 					SIZE_FILENAME); //接收文件名
 			os.write(Toolkit.intToByteArray(serverSocket.getLocalPort()), 0, 4); //本地监听端口
 			networker.send(sid++, os.toByteArray());
-			recieveFile(serverSocket, (File) params[1]);
+
+		}
+
+		else if (type == AC_REFUSE_FILEREQUEST) {
+			//拒绝接收文件
+			String fileName = (String) params[0];
+			ByteArrayOutputStream os = new ByteArrayOutputStream();
+			os.write(HEADER_FILE_REFUSE.getBytes(), 0, SIZE_HEADER);
+			os.write(Toolkit.padString(fileName, SIZE_FILENAME).getBytes(), 0, SIZE_FILENAME);
+			networker.send(sid++, os.toByteArray());
+
 		}
 	}
 
-	private void recieveFile(final ServerSocket serverSocket, final File saveFile) {
-		new Thread(new Runnable() {
+	private void recieveFile(final ServerSocket serverSocket1, final File saveFile1) {
+		new Thread() {
+			private ServerSocket serverSocket = serverSocket1;
+			private File saveFile = saveFile1;
 
 			@Override
 			public void run() {
@@ -174,11 +206,14 @@ public class ChatingControler extends Controler {
 					e.printStackTrace();
 				}
 			}
-		}).start();
+		}.start();
 	}
 
-	private void sendFile(final ClientInfo peer, final int port, final File localFile) {
-		new Thread(new Runnable() {
+	private void sendFile(final ClientInfo peer1, final int port1, final File localFile1) {
+		new Thread() {
+			private ClientInfo peer = peer1;
+			private int port = port1;
+			private File localFile = localFile1;
 
 			@Override
 			public void run() {
@@ -199,7 +234,7 @@ public class ChatingControler extends Controler {
 					e.printStackTrace();
 				}
 			}
-		});
+		}.start();
 	}
 
 	public ClientInfo getPeerClientInfo() {
