@@ -27,15 +27,14 @@ public class UnicastNetworker extends Networker {
 	protected void receiveData() {
 		if (socket == null || socket.isClosed()) {
 			controler.downConnect();
-			closeNetworker();
 			return;
 		}
 
 		int amount;
 		try {
 			amount = socket.getInputStream().read(buf);
-			if (amount <= 0)
-				return;
+			if (amount < 0)
+				controler.downConnect();
 			int i = 0;
 			while (i < amount) {
 				if (startSign ^ endSign) {
@@ -62,11 +61,8 @@ public class UnicastNetworker extends Networker {
 			}
 		} catch (IOException e) {
 			System.out.println("Don't worry about this exception, it is not a serious problem.");
+			controler.downConnect();
 			e.printStackTrace();
-			if (e.getMessage().indexOf("Connection reset") != -1) { //连接断开导致异常
-				controler.downConnect();
-				closeNetworker();
-			}
 		}
 	}
 
@@ -81,7 +77,6 @@ public class UnicastNetworker extends Networker {
 		}
 		if (socket == null || socket.isClosed()) {
 			controler.downConnect();
-			closeNetworker();
 			return;
 		}
 
@@ -92,6 +87,8 @@ public class UnicastNetworker extends Networker {
 			result = true;
 		} catch (IOException e) {
 			e.printStackTrace();
+			if (e.getMessage().indexOf("closed") != -1)
+				controler.downConnect();
 			result = false;
 		}
 		controler.receipt(s.getSid(), result);
@@ -100,9 +97,8 @@ public class UnicastNetworker extends Networker {
 	@Override
 	public void closeNetworker() {
 		super.closeNetworker();
-		if (socket != null && socket.isConnected()) { //断开连接
+		if (socket != null && !socket.isClosed()) { //断开连接
 			try {
-				socket.getOutputStream().close();
 				socket.close();
 			} catch (IOException e) {
 				e.printStackTrace();

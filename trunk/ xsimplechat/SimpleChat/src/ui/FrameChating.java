@@ -88,6 +88,7 @@ private String tempfile;
 			break;
 		case UPDATE_CLOSE_MYSELF:
 			frame.setVisible(false);
+			frame.dispose();
 			break;
 		case UPDATE_CONNECTSTATE_MYSELF:
 			bar.setString(" " + "%");

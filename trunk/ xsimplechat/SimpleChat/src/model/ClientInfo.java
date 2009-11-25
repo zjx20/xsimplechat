@@ -138,10 +138,8 @@ public class ClientInfo {
 	@Override
 	public String toString() {
 		String result = "";
-		result += "NickName:" + nickName + "\n";
-		result += "IPAddress:" + ipAddress.getHostAddress() + "\n";
-		//result += "UUID:" + uuid + "\n";
-		//result += "Port:" + port + "\n";
+		result += nickName + " (";
+		result += ipAddress.getHostAddress() + ")";
 		return result;
 	}
 }

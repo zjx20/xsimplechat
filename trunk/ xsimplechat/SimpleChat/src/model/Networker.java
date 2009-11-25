@@ -86,7 +86,7 @@ public abstract class Networker {
 	 * @param a 源byte数组
 	 * @return 编码后的byte数组
 	 */
-	protected byte[] encodeForSend(byte[] a) {
+	public static byte[] encodeForSend(byte[] a) {
 		int count = 0;
 		for (int i = 0; i < a.length; i++) {
 			if (a[i] == START_OF_HEADER || a[i] == END_OF_TRANSMISSION || a[i] == ESCAPE)
@@ -117,7 +117,7 @@ public abstract class Networker {
 	 * @param a 源byte数组
 	 * @return 解码后的byte数组
 	 */
-	protected byte[] decodeForReceive(byte[] a) {
+	public static byte[] decodeForReceive(byte[] a) {
 		int count = 0;
 		for (int i = 0; i < a.length; i++) {
 			if (a[i] == ESCAPE)
