@@ -4,6 +4,7 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
+import java.awt.Font;
 
 import model.*;
 
@@ -67,10 +68,9 @@ public class FrameMain extends Performer {
 		send = new JButton("发送");
 		close = new JButton("关闭");
 		save = new JButton("信息保存");
-		noticeArea = new JTextArea();
-		noticeArea.setEditable(false);
 		list = new JList(new DefaultListModel());
-		notice = new JLabel("群公告");
+		notice = new JLabel("当前在线人数");
+		noticeArea = new JTextArea("");
 		listlab = new JLabel("在线好友");
 		JPanel msgPanel = new JPanel();
 		msgPanel.setLayout(new BorderLayout());
@@ -92,19 +92,19 @@ public class FrameMain extends Performer {
 		JPanel infoPanel = new JPanel();
 		JPanel noticePanel = new JPanel();
 		noticePanel.setLayout(new BorderLayout());
-		noticePanel.add(notice, BorderLayout.NORTH);
-		noticePanel.add(noticeArea, BorderLayout.CENTER);
+		noticePanel.add(notice,BorderLayout.NORTH);
+		noticePanel.add(noticeArea,BorderLayout.CENTER);
+		noticePanel.setPreferredSize(new Dimension(180, 100));
 		noticePanel.setBorder(BorderFactory.createEtchedBorder());
 
 		JPanel listPanel = new JPanel();
 		listPanel.setLayout(new BorderLayout());
 		listPanel.add(listlab, BorderLayout.NORTH);
 		listPanel.add(new JScrollPane(list), BorderLayout.CENTER);
-		listPanel.setPreferredSize(new Dimension(180, 200));
 		listPanel.setBorder(BorderFactory.createEtchedBorder());
 		infoPanel.setLayout(new BorderLayout());
-		infoPanel.add(noticePanel, BorderLayout.CENTER);
-		infoPanel.add(listPanel, BorderLayout.SOUTH);
+		infoPanel.add(noticePanel, BorderLayout.NORTH);
+		infoPanel.add(listPanel, BorderLayout.CENTER);
 		infoPanel.setPreferredSize(new Dimension(180, 360));
 
 		JFrame.setDefaultLookAndFeelDecorated(true);
@@ -123,12 +123,6 @@ public class FrameMain extends Performer {
 	private InetAddress localIPAddress;
 
 	public void setEvent() {
-		/*if(nickname != null) {
-			Object[] params = new Object[1];
-			params[0] = getNickName();
-			controler.processUIAction(MainControler.AC_LOGIN, params);
-			//list.add(getNickName);
-		}*/
 
 		send.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
@@ -153,7 +147,7 @@ public class FrameMain extends Performer {
 				controler.processUIAction(MainControler.AC_CLOSE_WINDOW, params);
 			}
 		});
-
+	
 		list.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseClicked(MouseEvent e) {
@@ -174,16 +168,18 @@ public class FrameMain extends Performer {
 	public void updateUI(int type, Object[] args) {
 		switch (type) {
 		case UPDATE_LOGIN:
-			((DefaultListModel) list.getModel()).addElement(args[0]);
+			((DefaultListModel) list.getModel()).addElement((args[0]));
+			noticeArea.setText(""+((DefaultListModel)list.getModel()).getSize());
 			break;
 		case UPDATE_GROUPMESSAGE:
 			System.out.println("msg:" + (String) (args[0]));
 			appendReceiveText((String) args[0], Color.blue);
-			//	appendReceiveText((String)args[1],Color.black);
+			//appendReceiveText((String) args[1],Color.black);
 			sendArea.setText("");
 			break;
 		case UPDATE_LOGOUT:
 			((DefaultListModel) list.getModel()).removeElement(args[0]);
+			noticeArea.setText(""+((DefaultListModel)list.getModel()).getSize());
 			break;
 		case UPDATE_CLOSEWINDOW:
 			frame.setVisible(false);

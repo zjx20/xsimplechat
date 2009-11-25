@@ -6,8 +6,6 @@ import server.*;
 import ui.*;
 import util.Toolkit;
 
-import java.io.FileWriter;
-import java.io.IOException;
 import java.net.*;
 import java.util.*;
 import java.io.*;
@@ -17,8 +15,8 @@ import javax.swing.JOptionPane;
 
 public class MainControler extends Controler {
 
-	public static final int TIME_CHECK_ALIVE = 2000;
-	public static final int TIME_SEND_HEARTBEAT = 1500;
+	public static final int TIME_CHECK_ALIVE = 3000;
+	public static final int TIME_SEND_HEARTBEAT = 2000;
 	public static final int TIME_JUDGE_DEAD = 5000; //判定客户端断开时间长度
 	public static final int SIZE_HEADER = 16;
 
@@ -27,6 +25,8 @@ public class MainControler extends Controler {
 	private InetAddress localIPAddress;
 	private ChatingServer chatingServer;
 	private Set<ClientInfo> existedClient = Collections.synchronizedSet(new HashSet<ClientInfo>());
+	private static Set<ClientInfo> singleTalking = Collections
+			.synchronizedSet(new HashSet<ClientInfo>());
 	private Map<ClientInfo, Long> lastReceive = Collections
 			.synchronizedMap(new HashMap<ClientInfo, Long>());
 	private byte[] identifyInfo;
@@ -43,7 +43,8 @@ public class MainControler extends Controler {
 		this.performer = new FrameMain(this);
 		this.networker = new MulticastNetworker(this);
 		try {
-			chatingServer = new ChatingServer();
+			//chatingServer = new ChatingServer();
+			chatingServer = new ChatingServer(5432);	//指定监听端口
 			chatingServer.start();
 			localChatingPort = chatingServer.getLocalPort();
 			localIPAddress = InetAddress.getLocalHost();
@@ -58,7 +59,6 @@ public class MainControler extends Controler {
 
 		Timer checkTimer = new Timer();
 		checkTimer.schedule(new TimerTask() {
-
 			@Override
 			public void run() {
 				checkAlive();
@@ -67,12 +67,27 @@ public class MainControler extends Controler {
 
 		Timer sendTimer = new Timer();
 		sendTimer.schedule(new TimerTask() {
-
 			@Override
 			public void run() {
 				sendHeartbeat();
 			}
-		}, TIME_SEND_HEARTBEAT, TIME_SEND_HEARTBEAT);
+		}, 0, TIME_SEND_HEARTBEAT);
+	}
+
+	/**
+	 * <p>将c加入私聊集合中</p>
+	 * @param c ClientInfo对象
+	 */
+	public static void addToSingleTalking(ClientInfo c) {
+		singleTalking.add(c);
+	}
+
+	/**
+	 * <p>将c移出私聊集合</p>
+	 * @param c ClientInfo对象
+	 */
+	public static void removeFromSingleTalking(ClientInfo c) {
+		singleTalking.remove(c);
 	}
 
 	protected void sendHeartbeat() {
@@ -113,6 +128,7 @@ public class MainControler extends Controler {
 		// TODO Auto-generated method stub
 		String header = new String(buf, 0, SIZE_HEADER);
 		if (header.compareTo(HEADER_GROUPMESSAGE) == 0) {
+
 			byte[] id = (byte[]) Toolkit.cutArray(buf, SIZE_HEADER, ClientInfo.SIZE_IDENTIFYINFO);
 			ClientInfo clientInfo = ClientInfo.parseClientInfo(id);
 			receiveFromClient(clientInfo);
@@ -121,10 +137,13 @@ public class MainControler extends Controler {
 			params[0] = new String(buf, pos, len);
 			params[1] = clientInfo;
 			performer.updateUI(FrameMain.UPDATE_GROUPMESSAGE, params);
+
 		} else if (header.compareTo(HEADER_HEARTBEAT) == 0) {
+
 			byte[] id = (byte[]) Toolkit.cutArray(buf, SIZE_HEADER, ClientInfo.SIZE_IDENTIFYINFO);
 			ClientInfo clientInfo = ClientInfo.parseClientInfo(id);
 			receiveFromClient(clientInfo);
+
 		}
 	}
 
@@ -163,13 +182,19 @@ public class MainControler extends Controler {
 			break;
 		case AC_CLOSE_WINDOW:
 			performer.updateUI(FrameMain.UPDATE_CLOSEWINDOW, params);
+			networker.closeNetworker();
+			System.exit(0);
 			break;
 		case AC_SINGLE_TALK:
 			ClientInfo target = (ClientInfo) params[0];
+			if (singleTalking.contains(target))
+				return;
 			try {
-				Socket socket = new Socket(target.getIpAddress(),target.getPort());
+				addToSingleTalking(target);
+				Socket socket = new Socket(target.getIpAddress(), target.getPort());
 				new ChatingControler(socket);
 			} catch (IOException e) {
+				removeFromSingleTalking(target);
 				e.printStackTrace();
 			}
 			break;

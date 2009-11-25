@@ -48,8 +48,8 @@ public class ChatingControler extends Controler {
 	}
 
 	public void downConnect() {
-		// TODO Auto-generated method stub
-
+		networker.closeNetworker();
+		MainControler.removeFromSingleTalking(peerClientInfo);
 	}
 
 	@Override
@@ -102,6 +102,7 @@ public class ChatingControler extends Controler {
 			} else {
 				System.out.println(peerClientInfo);
 				this.performer = new FrameChating(this);
+				MainControler.addToSingleTalking(peerClientInfo);
 			}
 
 		}
