@@ -2,22 +2,27 @@ package ui;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
-import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.Insets;
+import java.awt.Rectangle;
 
 import model.*;
 
 import java.awt.event.*;
 
 import javax.swing.*;
+import javax.swing.border.Border;
+import javax.swing.event.CaretEvent;
+import javax.swing.event.CaretListener;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.text.StyleConstants;
 
 import controler.*;
 
-import java.awt.*;
-import java.io.*;
-import java.net.*;
 import java.util.Date;
 
 /**
@@ -28,6 +33,7 @@ public class FrameMain extends Performer {
 
 	private static String nickname;
 	private JTextPane receiveText;
+	private JScrollPane recepane;
 	private JTextArea sendArea;
 	private JButton send;
 	private JButton close;
@@ -36,19 +42,21 @@ public class FrameMain extends Performer {
 	private JList list;
 	private JLabel notice;
 	private JLabel listlab;
-	private File selectfile;
 	private JFrame frame;
 
 	public FrameMain(Controler controler) {
 		super(controler);
 		setEvent();
+		//addKeyListener(this);
 	}
 
 	public static String getNickName() {
 		while (nickname == null || nickname.length() > 9 || nickname.length() == 0) {
 			nickname = JOptionPane
 					.showInputDialog(null, "输入昵称", "登陆", JOptionPane.QUESTION_MESSAGE);
-			if (nickname == null || nickname.length() == 0) {
+			if (nickname == null)
+				System.exit(0);
+			else if (nickname.length() == 0) {
 				JOptionPane.showMessageDialog(null, "输入昵称长度必须大于0", "非法昵称",
 						JOptionPane.ERROR_MESSAGE);
 			} else if (nickname.length() > 9) {
@@ -71,10 +79,12 @@ public class FrameMain extends Performer {
 		list = new JList(new DefaultListModel());
 		notice = new JLabel("当前在线人数");
 		noticeArea = new JTextArea("");
+		noticeArea.setEditable(false);
 		listlab = new JLabel("在线好友");
 		JPanel msgPanel = new JPanel();
 		msgPanel.setLayout(new BorderLayout());
-		JScrollPane recepane = new JScrollPane(receiveText);
+		recepane = new JScrollPane(receiveText);
+		receiveText.setEditable(false);
 		recepane.setBorder(BorderFactory.createEtchedBorder());
 		JScrollPane sendpane = new JScrollPane(sendArea);
 		sendpane.setBorder(BorderFactory.createEtchedBorder());
@@ -92,8 +102,8 @@ public class FrameMain extends Performer {
 		JPanel infoPanel = new JPanel();
 		JPanel noticePanel = new JPanel();
 		noticePanel.setLayout(new BorderLayout());
-		noticePanel.add(notice,BorderLayout.NORTH);
-		noticePanel.add(noticeArea,BorderLayout.CENTER);
+		noticePanel.add(notice, BorderLayout.NORTH);
+		noticePanel.add(noticeArea, BorderLayout.CENTER);
 		noticePanel.setPreferredSize(new Dimension(180, 100));
 		noticePanel.setBorder(BorderFactory.createEtchedBorder());
 
@@ -109,6 +119,7 @@ public class FrameMain extends Performer {
 
 		JFrame.setDefaultLookAndFeelDecorated(true);
 		frame = new JFrame();
+		frame.setTitle("SimpleChat - " + getNickName() + " 群聊窗口");
 		frame.setLayout(new BorderLayout());
 		frame.getContentPane().add(msgPanel, BorderLayout.CENTER);
 		frame.getContentPane().add(infoPanel, BorderLayout.EAST);
@@ -117,19 +128,36 @@ public class FrameMain extends Performer {
 		frame.setVisible(true);
 		frame.setLocationRelativeTo(null);
 		frame.setResizable(false);
+		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
 	}
 
-	private InetAddress localIPAddress;
+	private void sendMessage() {
+		Object[] params = new Object[1];
+		Date time = new java.util.Date();
+		String nowtime = java.text.DateFormat.getInstance().format(time);
+		params[0] = getNickName() + "   (" + nowtime + ")" + "\n";
+		params[0] = params[0] + "     " + sendArea.getText() + "\n";
+		controler.processUIAction(MainControler.AC_SEND_MESSAGE, params);
+		sendArea.setText("");
+	}
+
+	class HotKeyListener extends KeyAdapter {
+
+		@Override
+		public void keyPressed(KeyEvent e) {
+			if (e.isControlDown() && e.getKeyCode() == KeyEvent.VK_ENTER) {
+				sendMessage();
+			}
+		}
+
+	}
 
 	public void setEvent() {
 
 		send.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				Object[] params = new Object[2];
-				params[0] = getNickName() + "   (" + new Date().toLocaleString() + ")" + "\n";
-				params[0] = params[0] + "     " + sendArea.getText() + "\n";
-				controler.processUIAction(MainControler.AC_SEND_MESSAGE, params);
+				sendMessage();
 			}
 		});
 
@@ -147,7 +175,7 @@ public class FrameMain extends Performer {
 				controler.processUIAction(MainControler.AC_CLOSE_WINDOW, params);
 			}
 		});
-	
+
 		list.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseClicked(MouseEvent e) {
@@ -157,6 +185,18 @@ public class FrameMain extends Performer {
 				}
 			}
 		});
+
+		recepane.getViewport().addChangeListener(new ChangeListener() {
+
+			@Override
+			public void stateChanged(ChangeEvent e) {
+				receiveText.scrollRectToVisible(new Rectangle(0, receiveText.getHeight()
+						- recepane.getHeight() + 25, receiveText.getWidth(),
+						recepane.getHeight() - 25));
+			}
+		});
+
+		sendArea.addKeyListener(new HotKeyListener());
 	}
 
 	public static final int UPDATE_LOGIN = 1;
@@ -169,17 +209,14 @@ public class FrameMain extends Performer {
 		switch (type) {
 		case UPDATE_LOGIN:
 			((DefaultListModel) list.getModel()).addElement((args[0]));
-			noticeArea.setText(""+((DefaultListModel)list.getModel()).getSize());
+			noticeArea.setText("" + ((DefaultListModel) list.getModel()).getSize());
 			break;
 		case UPDATE_GROUPMESSAGE:
-			System.out.println("msg:" + (String) (args[0]));
 			appendReceiveText((String) args[0], Color.blue);
-			//appendReceiveText((String) args[1],Color.black);
-			sendArea.setText("");
 			break;
 		case UPDATE_LOGOUT:
 			((DefaultListModel) list.getModel()).removeElement(args[0]);
-			noticeArea.setText(""+((DefaultListModel)list.getModel()).getSize());
+			noticeArea.setText("" + ((DefaultListModel) list.getModel()).getSize());
 			break;
 		case UPDATE_CLOSEWINDOW:
 			frame.setVisible(false);
@@ -201,4 +238,5 @@ public class FrameMain extends Performer {
 		receiveText.replaceSelection(sendInfo);
 		receiveText.setEditable(false);
 	}
+
 }

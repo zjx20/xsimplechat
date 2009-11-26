@@ -26,14 +26,15 @@ public class UnicastNetworker extends Networker {
 	@Override
 	protected void receiveData() {
 		if (socket == null || socket.isClosed()) {
-			controler.downConnect();
+			if(!isClosed())
+				controler.downConnect();
 			return;
 		}
 
 		int amount;
 		try {
 			amount = socket.getInputStream().read(buf);
-			if (amount < 0)
+			if (amount < 0 && !isClosed())
 				controler.downConnect();
 			int i = 0;
 			while (i < amount) {
@@ -61,7 +62,8 @@ public class UnicastNetworker extends Networker {
 			}
 		} catch (IOException e) {
 			System.out.println("Don't worry about this exception, it is not a serious problem.");
-			controler.downConnect();
+			if(!isClosed())
+				controler.downConnect();
 			e.printStackTrace();
 		}
 	}
@@ -76,7 +78,8 @@ public class UnicastNetworker extends Networker {
 			return;
 		}
 		if (socket == null || socket.isClosed()) {
-			controler.downConnect();
+			if(!isClosed())
+				controler.downConnect();
 			return;
 		}
 
@@ -87,7 +90,7 @@ public class UnicastNetworker extends Networker {
 			result = true;
 		} catch (IOException e) {
 			e.printStackTrace();
-			if (e.getMessage().indexOf("closed") != -1)
+			if (e.getMessage().indexOf("closed") != -1 && !isClosed())
 				controler.downConnect();
 			result = false;
 		}

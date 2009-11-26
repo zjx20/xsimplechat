@@ -44,7 +44,7 @@ public class MainControler extends Controler {
 		this.networker = new MulticastNetworker(this);
 		try {
 			//chatingServer = new ChatingServer();
-			chatingServer = new ChatingServer(5432);	//指定监听端口
+			chatingServer = new ChatingServer(5432); //指定监听端口
 			chatingServer.start();
 			localChatingPort = chatingServer.getLocalPort();
 			localIPAddress = InetAddress.getLocalHost();
@@ -71,7 +71,7 @@ public class MainControler extends Controler {
 			public void run() {
 				sendHeartbeat();
 			}
-		}, 0, TIME_SEND_HEARTBEAT);
+		}, 200, TIME_SEND_HEARTBEAT);
 	}
 
 	/**
@@ -186,9 +186,23 @@ public class MainControler extends Controler {
 			System.exit(0);
 			break;
 		case AC_SINGLE_TALK:
-			ClientInfo target = (ClientInfo) params[0];
+			final ClientInfo target = (ClientInfo) params[0];
 			if (singleTalking.contains(target))
 				return;
+			new ForConnectSingleTalk(target).start();
+			break;
+		}
+	}
+
+	class ForConnectSingleTalk extends Thread {
+		private ClientInfo target;
+
+		public ForConnectSingleTalk(ClientInfo target) {
+			this.target = target;
+		}
+
+		@Override
+		public void run() {
 			try {
 				addToSingleTalking(target);
 				Socket socket = new Socket(target.getIpAddress(), target.getPort());
@@ -197,7 +211,6 @@ public class MainControler extends Controler {
 				removeFromSingleTalking(target);
 				e.printStackTrace();
 			}
-			break;
 		}
 	}
 
