@@ -23,8 +23,8 @@ public class Demo3 {
 	 */
 	public static void main(String[] args) {
 
-		String ip="172.16.34.245";
-		String nickname="X";
+		String ip="172.16.16.227";
+		String nickname="Jan";
 		
 
 		new MainControler();

@@ -21,6 +21,7 @@ public abstract class Networker {
 	protected boolean finish;
 	protected Controler controler;
 	protected BlockingQueue<SendNode> sendQueue;
+	private boolean closed;
 
 	protected Networker() {
 
@@ -30,8 +31,17 @@ public abstract class Networker {
 		this.controler = controler;
 		sendQueue = new LinkedBlockingQueue<SendNode>();
 		finish = false;
+		closed = false;
 		new NetworkSender(this).start();
 		new NetworkListener(this).start();
+	}
+
+	/**
+	 * <p>Networker是否已经关闭</p>
+	 * @return true or false
+	 */
+	public boolean isClosed() {
+		return closed;
 	}
 
 	/**
@@ -63,6 +73,7 @@ public abstract class Networker {
 	 */
 	public void closeNetworker() {
 		finish = true;
+		closed = true;
 	}
 
 	/**

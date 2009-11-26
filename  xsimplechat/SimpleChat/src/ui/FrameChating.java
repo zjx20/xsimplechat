@@ -1,43 +1,35 @@
 package ui;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Container;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.Graphics;
-import java.awt.Image;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-
-import model.*;
-import java.io.*;
 import java.awt.*;
+import java.awt.event.*;
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.text.StyleConstants;
 
-import java.util.Date;
+import model.*;
+import controler.*;
 
-import controler.ChatingControler;
+import java.io.*;
+import java.util.Date;
 
 public class FrameChating extends Performer {
 
 	private JTextPane receiveText;
+	private JScrollPane recepane;
 	private JTextArea sendArea;
 	private JButton sendmsg;
 	private JButton close;
 	private JButton save;
 	private JButton sendfile;
-	private JLabel labname;
 	private JLabel labfilename;
 	private JLabel labsize;
 	private JLabel labbar;
-	private JLabel name;
 	private JLabel filename;
 	private JLabel size;
 	private JProgressBar bar;
 	private File selectfile;
-	private File[] files;
+	private File files;
 	private JFrame frame;
 	private JFrame sendframe;
 	private JLabel labsendname;
@@ -46,6 +38,7 @@ public class FrameChating extends Performer {
 	private JLabel sendsize;
 	private JButton accept;
 	private JButton refuse;
+	private ClientInfo peerClientInfo;
 
 	public FrameChating(Controler controler1) {
 		super(controler1);
@@ -53,19 +46,19 @@ public class FrameChating extends Performer {
 	}
 
 	public static final int UPDATE_NEWMESSAGE = 1;
-	public static final int UPDATE_CLOSE = 2;
-	public static final int UPDATE_CONNECTSTATE = 3;
-	public static final int UPDATE_SENDFILE = 4;
-	public static final int UPDATE_NEWMESSAGE_MYSELF = 5;
-	public static final int UPDATE_CLOSE_MYSELF = 6;
-	public static final int UPDATE_CONNECTSTATE_MYSELF = 7;
-	public static final int UPDATE_SENDFILE_MYSELF = 8;
-	public static final int UPDATE_FILE_REQUEST = 9;
-	public static final int UPDATE_ACCEPT_FILE = 10;
-	public static final int UPDATE_REFUSE_FILE = 11;
-	public static final int UPDATE_ACCEPT_FILE_REQUEST = 12;
-	
-private String tempfile;
+	public static final int UPDATE_CONNECTSTATE = 2;
+	public static final int UPDATE_NEWMESSAGE_MYSELF = 3;
+	public static final int UPDATE_CLOSE_MYSELF = 4;
+	public static final int UPDATE_FILE_REQUEST = 5;
+	public static final int UPDATE_ACCEPT_FILE = 6;
+	public static final int UPDATE_REFUSE_FILE = 7;
+	public static final int UPDATE_ACCEPT_FILE_REQUEST = 8;
+	public static final int UPDATE_PROGRESS = 9;
+	public static final int UPDATE_PROGRESS_MYSELF = 10;
+	public static final int UPDATE_FILE_TRANSFER_COMPLETE = 11;
+
+	private String tempfile;
+	private long tempsize;
 
 	@Override
 	public void updateUI(int type, Object[] params) {
@@ -73,62 +66,73 @@ private String tempfile;
 		case UPDATE_NEWMESSAGE:
 			appendReceiveText((String) params[0], Color.blue);
 			break;
-		case UPDATE_CLOSE:
-			break;
-		case UPDATE_CONNECTSTATE:
-			bar.setString(" " + "%");
-			break;
-		case UPDATE_SENDFILE:
-			break;
 		case UPDATE_NEWMESSAGE_MYSELF:
-			appendReceiveText((String) params[0], Color.blue);
+			appendReceiveText((String) params[0], Color.GREEN);
 			sendArea.setText("");
 			break;
-		case UPDATE_SENDFILE_MYSELF:
+		case UPDATE_PROGRESS:
+			bar.setValue((Integer) params[0]);
+			break;
+		case UPDATE_PROGRESS_MYSELF:
+			bar.setValue((Integer) params[0]);
+			break;
+		case UPDATE_CONNECTSTATE:
+			JOptionPane.showMessageDialog(null, peerClientInfo.getNickName()
+					+ "关闭了聊天窗口，连接已断开，请重新连接");
 			break;
 		case UPDATE_CLOSE_MYSELF:
 			frame.setVisible(false);
 			frame.dispose();
 			break;
-		case UPDATE_CONNECTSTATE_MYSELF:
-			bar.setString(" " + "%");
-			break;
 		case UPDATE_FILE_REQUEST:
-			tempfile=(String)params[0];
+			tempfile = (String) params[0];
 			generateFileUI();
+			sendname.setText(tempfile);
+			tempsize = (Long) params[1];
+			sendsize.setText(tempsize / 1024 + "KB");
 			setFileEvent();
 			break;
-		case UPDATE_ACCEPT_FILE:
-			JOptionPane
-					.showMessageDialog(null, "对方同意发送文件", "文件传输", JOptionPane.INFORMATION_MESSAGE);
-			labfilename.setVisible(true);
-			labsize.setVisible(true);
-			labbar.setVisible(true);
-			bar.setVisible(true);
-			filename.setText(files[0].getName());
-			size.setText(Long.toString(files[0].length() / 1024) + "K");
-			break;
-		case UPDATE_REFUSE_FILE:
-			JOptionPane
-					.showMessageDialog(null, "对方拒绝发送文件", "文件传输", JOptionPane.INFORMATION_MESSAGE);
 		case UPDATE_ACCEPT_FILE_REQUEST:
 			labfilename.setVisible(true);
-			//filename.setText((String)params[0]);
+			filename.setText(tempfile);
 			labsize.setVisible(true);
-			//size.setText((String)params[1]);
+			size.setText(tempsize / 1024 + "KB");
 			labbar.setVisible(true);
 			bar.setVisible(true);
+			break;
+		case UPDATE_ACCEPT_FILE:
+			JOptionPane.showMessageDialog(null, peerClientInfo.getNickName() + "同意接收文件："
+					+ params[0], "文件传输", JOptionPane.INFORMATION_MESSAGE);
+			labfilename.setVisible(true);
+			labsize.setVisible(true);
+			labbar.setVisible(true);
+			bar.setVisible(true);
+			filename.setText(files.getName());
+			size.setText(Long.toString(files.length() / 1024) + "KB");
+			break;
+		case UPDATE_REFUSE_FILE:
+			JOptionPane.showMessageDialog(null, peerClientInfo.getNickName() + "拒绝接收文件："
+					+ params[0], "文件传输", JOptionPane.INFORMATION_MESSAGE);
+			break;
+		case UPDATE_FILE_TRANSFER_COMPLETE:
+			JOptionPane.showMessageDialog(null, params[0] + "传送完毕！", "文件传输",
+					JOptionPane.INFORMATION_MESSAGE);
+			labfilename.setVisible(false);
+			labsize.setVisible(false);
+			labbar.setVisible(false);
+			bar.setVisible(false);
+			break;
 		}
 	}
 
 	@Override
 	protected void generateUI() {
-		// TODO Auto-generated method stub
 
 		JPanel msgPanel = new JPanel();
 		msgPanel.setLayout(new BorderLayout());
 		receiveText = new JTextPane();
-		JScrollPane recepane = new JScrollPane(receiveText);
+		recepane = new JScrollPane(receiveText);
+		receiveText.setEditable(false);
 		recepane.setBorder(BorderFactory.createEtchedBorder());
 		sendArea = new JTextArea();
 		sendArea.setLineWrap(true);
@@ -140,14 +144,12 @@ private String tempfile;
 
 		ImageIcon icon = new ImageIcon(getClass().getResource("picture.jpg"));
 		ImagePanel infoPanel = new ImagePanel(icon);//背景图片  
-		labname = new JLabel("对方昵称:");
 		labfilename = new JLabel("文件名称:");
 		labfilename.setVisible(false);
 		labsize = new JLabel("文件大小:");
 		labsize.setVisible(false);
 		labbar = new JLabel("传输进度:");
 		labbar.setVisible(false);
-		name = new JLabel("");
 		filename = new JLabel("");
 		size = new JLabel("");
 		bar = new JProgressBar();
@@ -155,14 +157,11 @@ private String tempfile;
 		bar.setVisible(false);
 		bar.setStringPainted(true);
 		infoPanel.setPreferredSize(new Dimension(180, 360));
-		name.setPreferredSize(new Dimension(100, 20));
 		filename.setPreferredSize(new Dimension(100, 20));
 		size.setPreferredSize(new Dimension(100, 20));
 		bar.setPreferredSize(new Dimension(100, 20));
 
 		infoPanel.setLayout(new FlowLayout());
-		infoPanel.add(labname);
-		infoPanel.add(name);
 		infoPanel.add(labfilename);
 		infoPanel.add(filename);
 		infoPanel.add(labsize);
@@ -182,8 +181,11 @@ private String tempfile;
 		menuPanel.add(close);
 		menuPanel.setBorder(BorderFactory.createEtchedBorder());
 
+		peerClientInfo = ((ChatingControler) controler).getPeerClientInfo();
+
 		JFrame.setDefaultLookAndFeelDecorated(true);
 		frame = new JFrame();
+		frame.setTitle(peerClientInfo.toString());
 		frame.setLayout(new BorderLayout());
 		frame.getContentPane().add(msgPanel, BorderLayout.CENTER);
 		frame.getContentPane().add(infoPanel, BorderLayout.EAST);
@@ -192,6 +194,28 @@ private String tempfile;
 		frame.setVisible(true);
 		frame.setLocationRelativeTo(null);
 		frame.setResizable(false);
+		frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+
+	}
+
+	private void sendMessage() {
+		Object[] params = new Object[1];
+		Date time = new java.util.Date();
+		String nowtime = java.text.DateFormat.getInstance().format(time);
+		params[0] = ClientInfo.getCurrentClientInfo().getNickName() + "    (" + nowtime + ")"
+				+ "\n" + "   ";
+		params[0] = params[0] + sendArea.getText() + "\n";
+		controler.processUIAction(ChatingControler.AC_SENDMESSAGE, params);
+	}
+
+	class HotKeyListener extends KeyAdapter {
+
+		@Override
+		public void keyPressed(KeyEvent e) {
+			if (e.isControlDown() && e.getKeyCode() == KeyEvent.VK_ENTER) {
+				sendMessage();
+			}
+		}
 
 	}
 
@@ -199,10 +223,7 @@ private String tempfile;
 		sendmsg.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				Object[] params = new Object[1];
-				params[0] = " (" + new Date().toLocaleString() + ")" + "\n" + "   ";
-				params[0] = params[0] + sendArea.getText() + "\n";
-				controler.processUIAction(ChatingControler.AC_SENDMESSAGE, params);
+				sendMessage();
 			}
 		});
 
@@ -211,10 +232,11 @@ private String tempfile;
 			public void actionPerformed(ActionEvent e) {
 				Object[] params = new Object[1];
 				JFileChooser chooser = new JFileChooser();
-				chooser.setMultiSelectionEnabled(true);
 				chooser.showOpenDialog(null);
-				files = chooser.getSelectedFiles();
-				params[0] = files[0];
+				files = chooser.getSelectedFile();
+				if (files == null)
+					return;
+				params[0] = files;
 				controler.processUIAction(ChatingControler.AC_SENDFILE, params);
 			}
 		});
@@ -232,6 +254,24 @@ private String tempfile;
 				controler.processUIAction(ChatingControler.AC_CLOSEWINDOW, null);
 			}
 		});
+
+		frame.addWindowListener(new WindowAdapter() {
+			public void windowClosing(WindowEvent e) {
+				controler.processUIAction(ChatingControler.AC_CLOSEWINDOW, null);
+			}
+		});
+		
+		recepane.getViewport().addChangeListener(new ChangeListener() {
+
+			@Override
+			public void stateChanged(ChangeEvent e) {
+				receiveText.scrollRectToVisible(new Rectangle(0, receiveText.getHeight()
+						- recepane.getHeight() + 25, receiveText.getWidth(),
+						recepane.getHeight() - 25));
+			}
+		});
+
+		sendArea.addKeyListener(new HotKeyListener());
 	}
 
 	public void appendReceiveText(String sendInfo, Color color) {
@@ -257,14 +297,12 @@ private String tempfile;
 		labsendname.setBounds(10, 60, 55, 25);
 		sendpanel.add(labsendname);
 		sendname = new JLabel("");
-		//	sendname.setText((String) params[0]);
-		sendname.setBounds(70, 60, 100, 25);
+		sendname.setBounds(70, 60, 200, 25);
 		sendpanel.add(sendname);
 		labsendsize = new JLabel("文件大小:");
 		labsendsize.setBounds(10, 90, 55, 25);
 		sendpanel.add(labsendsize);
 		sendsize = new JLabel("");
-		//	sendsize.setText((String) params[1]);
 		sendsize.setBounds(70, 90, 100, 25);
 		sendpanel.add(sendsize);
 		accept = new JButton("接收");
@@ -284,15 +322,15 @@ private String tempfile;
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				JFileChooser jfc = new JFileChooser();
-				jfc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-
-				int r = jfc.showDialog(null, "保存路径");
-				if (r == JFileChooser.APPROVE_OPTION) {
+				int r = jfc.showDialog(null, "保存");
+				if (r == JFileChooser.APPROVE_OPTION)
 					selectfile = jfc.getSelectedFile();
-				}
-				Object[] params = new Object[2];
+				else
+					return;
+				Object[] params = new Object[3];
 				params[0] = tempfile;
-				params[1] = selectfile.getPath();
+				params[1] = selectfile;
+				params[2] = tempsize;
 				sendframe.setVisible(false);
 				controler.processUIAction(ChatingControler.AC_ACCEPT_FILEREQUEST, params);
 			}
@@ -312,6 +350,7 @@ private String tempfile;
 
 class ImagePanel extends JPanel {
 
+	private static final long serialVersionUID = -2239038373691280627L;
 	private Image img;
 
 	public ImagePanel(ImageIcon imageIcon) {
