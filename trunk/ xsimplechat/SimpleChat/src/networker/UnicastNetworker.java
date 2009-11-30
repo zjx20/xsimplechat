@@ -61,10 +61,9 @@ public class UnicastNetworker extends Networker {
 				}
 			}
 		} catch (IOException e) {
-			System.out.println("Don't worry about this exception, it is not a serious problem.");
+			//System.out.println("Don't worry about this exception, it is not a serious problem.");
 			if(!isClosed())
 				controler.downConnect();
-			e.printStackTrace();
 		}
 	}
 

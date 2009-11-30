@@ -1,17 +1,14 @@
 package demo;
 
 import model.*;
-import networker.MulticastNetworker;
 import controler.*;
 import java.io.*;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
-import java.util.Scanner;
 import java.util.UUID;
 
 import server.ChatingServer;
-import ui.FrameMain;
 
 public class Demo1 {
 	//static String ip = "172.16.16.155";
