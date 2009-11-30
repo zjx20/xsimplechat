@@ -43,8 +43,8 @@ public class MainControler extends Controler {
 		this.performer = new FrameMain(this);
 		this.networker = new MulticastNetworker(this);
 		try {
-			//chatingServer = new ChatingServer();
-			chatingServer = new ChatingServer(5432); //指定监听端口
+			chatingServer = new ChatingServer();
+			//chatingServer = new ChatingServer(5432); //指定监听端口
 			chatingServer.start();
 			localChatingPort = chatingServer.getLocalPort();
 			localIPAddress = InetAddress.getLocalHost();

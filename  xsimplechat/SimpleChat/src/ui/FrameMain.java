@@ -1,34 +1,18 @@
 package ui;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Dimension;
-import java.awt.FlowLayout;
-import java.awt.Graphics;
-import java.awt.Insets;
-import java.awt.Rectangle;
-
-import model.*;
-
+import java.awt.*;
 import java.awt.event.*;
 
 import javax.swing.*;
-import javax.swing.border.Border;
-import javax.swing.event.CaretEvent;
-import javax.swing.event.CaretListener;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.text.StyleConstants;
 
+import model.*;
 import controler.*;
 
 import java.util.Date;
 
-/**
- * @author X
- * 
- */
 public class FrameMain extends Performer {
 
 	private static String nickname;
@@ -38,9 +22,7 @@ public class FrameMain extends Performer {
 	private JButton send;
 	private JButton close;
 	private JButton save;
-	private JTextArea noticeArea;
 	private JList list;
-	private JLabel notice;
 	private JLabel listlab;
 	private JFrame frame;
 
@@ -52,14 +34,14 @@ public class FrameMain extends Performer {
 
 	public static String getNickName() {
 		while (nickname == null || nickname.length() > 9 || nickname.length() == 0) {
-			nickname = JOptionPane
-					.showInputDialog(null, "输入昵称", "登陆", JOptionPane.QUESTION_MESSAGE);
+			nickname = JOptionPane.showInputDialog(null, "请输入昵称：（10个字以内，任意字符）", "登陆",
+					JOptionPane.QUESTION_MESSAGE);
 			if (nickname == null)
 				System.exit(0);
 			else if (nickname.length() == 0) {
 				JOptionPane.showMessageDialog(null, "输入昵称长度必须大于0", "非法昵称",
 						JOptionPane.ERROR_MESSAGE);
-			} else if (nickname.length() > 9) {
+			} else if (nickname.length() > 10) {
 				JOptionPane.showMessageDialog(null, "输入昵称长度必须少于10", "非法昵称",
 						JOptionPane.ERROR_MESSAGE);
 			}
@@ -77,10 +59,7 @@ public class FrameMain extends Performer {
 		close = new JButton("关闭");
 		save = new JButton("信息保存");
 		list = new JList(new DefaultListModel());
-		notice = new JLabel("当前在线人数");
-		noticeArea = new JTextArea("");
-		noticeArea.setEditable(false);
-		listlab = new JLabel("在线好友");
+		listlab = new JLabel("在线：");
 		JPanel msgPanel = new JPanel();
 		msgPanel.setLayout(new BorderLayout());
 		recepane = new JScrollPane(receiveText);
@@ -100,12 +79,6 @@ public class FrameMain extends Performer {
 		menuPanel.setBorder(BorderFactory.createEtchedBorder());
 
 		JPanel infoPanel = new JPanel();
-		JPanel noticePanel = new JPanel();
-		noticePanel.setLayout(new BorderLayout());
-		noticePanel.add(notice, BorderLayout.NORTH);
-		noticePanel.add(noticeArea, BorderLayout.CENTER);
-		noticePanel.setPreferredSize(new Dimension(180, 100));
-		noticePanel.setBorder(BorderFactory.createEtchedBorder());
 
 		JPanel listPanel = new JPanel();
 		listPanel.setLayout(new BorderLayout());
@@ -113,7 +86,6 @@ public class FrameMain extends Performer {
 		listPanel.add(new JScrollPane(list), BorderLayout.CENTER);
 		listPanel.setBorder(BorderFactory.createEtchedBorder());
 		infoPanel.setLayout(new BorderLayout());
-		infoPanel.add(noticePanel, BorderLayout.NORTH);
 		infoPanel.add(listPanel, BorderLayout.CENTER);
 		infoPanel.setPreferredSize(new Dimension(180, 360));
 
@@ -209,14 +181,14 @@ public class FrameMain extends Performer {
 		switch (type) {
 		case UPDATE_LOGIN:
 			((DefaultListModel) list.getModel()).addElement((args[0]));
-			noticeArea.setText("" + ((DefaultListModel) list.getModel()).getSize());
+			listlab.setText("在线（" + ((DefaultListModel) list.getModel()).getSize() + "人）：");
 			break;
 		case UPDATE_GROUPMESSAGE:
 			appendReceiveText((String) args[0], Color.blue);
 			break;
 		case UPDATE_LOGOUT:
 			((DefaultListModel) list.getModel()).removeElement(args[0]);
-			noticeArea.setText("" + ((DefaultListModel) list.getModel()).getSize());
+			listlab.setText("在线（" + ((DefaultListModel) list.getModel()).getSize() + "人）：");
 			break;
 		case UPDATE_CLOSEWINDOW:
 			frame.setVisible(false);
